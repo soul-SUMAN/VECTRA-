@@ -3,3 +3,7 @@
 @import "tailwindcss";
 
 @source "../node_modules/flowbite-datepicker";
+
+html {
+  scroll-behavior: smooth;
+}

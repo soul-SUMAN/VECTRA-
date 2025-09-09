@@ -4,7 +4,7 @@ export default function Home() {
     <>
         <div>
                 
-            <div className="relative "
+            <div id="home" className="relative "
             style={
                 {backgroundImage: "url('/cars.png')",
                 backgroundSize: 'cover',
@@ -152,7 +152,7 @@ export default function Home() {
 
 
 
- <section className="py-24 relative bg-gray-50 dark:bg-neutral-900">
+ <section id="about" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
       <div className="w-full max-w-7xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12 items-center">
         
         {/* LEFT SIDE → Car Image */}
@@ -207,7 +207,7 @@ export default function Home() {
 
 
 
-     <section className="py-24 relative bg-gray-50 dark:bg-neutral-900">
+     <section id= "contact" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
       <div className="w-full max-w-6xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12">
         
         {/* LEFT SIDE → Info */}
