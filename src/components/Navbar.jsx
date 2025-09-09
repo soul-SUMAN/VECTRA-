@@ -1,4 +1,6 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { HashLink } from "react-router-hash-link";
 
 export default function Navbar() {
   return (
@@ -122,63 +124,59 @@ export default function Navbar() {
                          md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
           >
             <li>
-              <a
-                href="#home"
+              <Link to="/"
                 className="block py-2 px-3 text-white bg-yellow-300 rounded-sm md:bg-transparent md:text-yellow-300 md:p-0 md:dark:text-yellow-300"
                 aria-current="page"
               >
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="#cars"
+              <Link to="/cars"
                 className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
                            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
                            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 Cars
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="#bookings"
+              <Link to="/bookings"
                 className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
                            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
                            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 My Bookings
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="#wishlist"
+              <Link to="/wishlist"
                 className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
                            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
                            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 Wishlist
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <HashLink smooth to="/#about"
                 href="#about"
                 className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
                            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
                            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 About Us
-              </a>
+              </HashLink>
             </li>
             <li>
-              <a
+              <HashLink smooth to="/#contact"
                 href="#contact"
                 className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
                            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
                            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
               >
                 Contact
-              </a>
+              </HashLink>
             </li>
           </ul>
         </div>
