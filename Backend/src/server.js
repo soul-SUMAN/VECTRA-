@@ -1,4 +1,15 @@
-import express from 'express'
+// require('dotenv').config({path: './env'})
+import dotenv from "dotenv";
+import express from 'express';
+import connectDB from './db/dbconnect.js';
+
+dotenv.config({
+    path: './.env'
+})
+
+connectDB();
+
+
 const app=express()
 
 app.get('/',(req,res)=>{
