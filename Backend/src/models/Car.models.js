@@ -1,10 +1,14 @@
 import mongoose from "mongoose"
+import mongooseAggregatePeginate from "mongoose-aggregate-paginate-v2"
 
 const carSchema=new mongoose.Schema(
     {
         name:{
             type: String,
             required:true
+        },
+        image:{
+            type:String
         },
         bodyType:{
             type:String,
@@ -42,4 +46,5 @@ const carSchema=new mongoose.Schema(
     }
 )
 
+carSchema.plugin(mongooseAggregatePeginate)
 export const Cars=mongoose.model('Cars',carSchema)
