@@ -1,6 +1,6 @@
 // require('dotenv').config({path: './env'})
 import dotenv from "dotenv";
-
+import { app } from "./app.js";
 import connectDB from './db/dbconnect.js';
 
 dotenv.config({
@@ -11,7 +11,7 @@ connectDB()
 .then(()=>{
 
     app.on("error", (error)=>{
-        console.log("Error appear " , error);
+        console.log("Error appear " , error)
         throw error;
     })
 

@@ -1,12 +1,12 @@
 import express from "express";
-import corse from "corse";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 
 const app = express();
 
-// configure corse
-app.use(corse({
-    origin: process.env.CORSE_ORIGIN,
+// configure cors
+app.use(cors({
+    origin: process.env.CORS_ORIGIN,
     Credential:true
 
 }))
@@ -21,5 +21,17 @@ app.use(express.urlencoded({extended:true, limit:"20kb"}))
 app.use(express.static("public"))
 // for using the cookies from user end with the help of server to access the user data
 app.use(cookieParser())
+
+
+// routes import 
+
+import userRouter from "./routers/user.routes.js";
+
+
+
+
+// router declaration
+app.use("/api/v1/user",userRouter)
+
 
 export { app };
