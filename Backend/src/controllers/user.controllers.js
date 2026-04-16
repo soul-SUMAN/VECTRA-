@@ -5,7 +5,7 @@ import { User } from "../models/User.models.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 const registerUser=asyncHandler(async(req,res)=>{
-     /*
+    /*
     CHECKLIST:
     1. Get user details from frontend
     2. Validation
@@ -36,10 +36,10 @@ const registerUser=asyncHandler(async(req,res)=>{
     if(!validator.isStrongPassword(password)){
         throw new ApiError(400 , "Weak password !! Password must contain uppercase, lowercase, number, special character and minimum 8 characters");
     }
-    console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
+    
     
     //3. check user exisi or not
-    const userExist=User.findOne({
+    const userExist= await User.findOne({
         $or: [{ username },{ email }]
     })
     if(userExist){
@@ -66,7 +66,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         username: username.toLowerCase(),
         email,
         password,
-        avtar: avatar.url
+        avatar: avatar.url
     });
 
     //7. Remove password & refreshToken
@@ -77,6 +77,9 @@ const registerUser=asyncHandler(async(req,res)=>{
     if(!createdUser){
         throw new ApiError(500 , "Something went wrong while registering user")
     }
+    
+    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
+
 
     //8. Return response
     return res.status(201).json(

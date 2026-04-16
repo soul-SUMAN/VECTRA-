@@ -21,19 +21,25 @@ const userSchema=new mongoose.Schema(
         },
         password:{
             type: String,
-            required: [true, 'password is required'],
-            unique: true
+            required: [true, 'password is required']
+            
         },
         fullname:{
             type: String,
             required: true,
             trim: true
         },
-        phone: String,
+        phone:{
+            type:String,
+            default:""
+        },
         avatar:{
             type: String
         },
-        licenceNumber: String,
+        licenceNumber: {
+            type: String,
+            default: null
+        },
         role:{
             type: String,
             enum:["user","admin"],
@@ -41,6 +47,32 @@ const userSchema=new mongoose.Schema(
         },
         refreshToken:{
             type:String
+        },
+        address:{
+            addressline1:{
+                type:String,
+                default:""
+            },
+            addressline2:{
+                type:String,
+                default:""
+            },
+            city:{
+                type:String,
+                default:""
+            },
+            state:{
+                type:String,
+                default:""
+            },
+            postalcode:{
+                type:String,
+                default:""
+            },
+            country:{
+                type:String,
+                default:"India"
+            }
         }
 
     },
@@ -50,11 +82,11 @@ const userSchema=new mongoose.Schema(
 )
 
 // hashing the password
-userSchema.pre("save", async function(next){
+userSchema.pre("save", async function(){
 
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return;
     this.password=await bcrypt.hash(this.password, 10);
-    next();
+    
 })
 
 // compare the user password and the hash password
@@ -71,7 +103,7 @@ userSchema.methods.generateAccessToken= function(){
             _id: this._id,
             email: this.email,
             username: this.username,
-            fullname: this.name
+            fullname: this.fullname
         },
         process.env.ACCESS_TOKEN_SECKRET,
         {
