@@ -25,7 +25,7 @@ const carSchema=new mongoose.Schema(
             type:Number
         },
         transmission:{
-            type:string,
+            type:String,
             enum:["Manual","Automatic"]
         },
         seats: Number,

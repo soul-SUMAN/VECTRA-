@@ -97,7 +97,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(500 , "Something went wrong while registering user")
     }
     
-    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
+    console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
 
     //8. Return response
     return res.status(201).json(
@@ -150,7 +150,7 @@ const loginUser= asyncHandler(async(req,res)=>{
     const {accessToken , refreshToken}=await generateRefreshAndAccessToken(user._id)
 
     //6. remove sensitive field
-    const loggedInUser= await user.findById(user._id).select(
+    const loggedInUser= await User.findById(user._id).select(
         "-password -refreshToken"
     )
 
@@ -221,7 +221,7 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
          throw new ApiError(401, "Invalid Refresh Token")
      }
  
-     if(incomingRefreshToken !== User?.refreshToken){
+     if(incomingRefreshToken !== user?.refreshToken){
          throw new ApiError(401, "Refreshtoken is expired or used")
      }
  
@@ -252,4 +252,29 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
 
 })
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken}
+const changePassword= asyncHandler(async(req, res)=>{
+    const {oldPassword, newPassword}= req.body
+    const user= await User.findById(req.user?._id)
+    const isPasswordCorrect= await user.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect){
+        throw new ApiError(400, "Invalid old password")
+    }
+
+    user.password= newPassword
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, "Password changed successfully")
+    )
+})
+
+const getCurrentUser= asyncHandler(async(req,res)=>{
+    return res
+    .status(200)
+    .json(200, req.user, "Current user data fetched successfully")
+})
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser}

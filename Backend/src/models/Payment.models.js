@@ -6,7 +6,7 @@ const paymentSchema=new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref:"User"
         },
-        booling:{
+        booking:{
             type: mongoose.Schema.Types.ObjectId,
             ref: "Bookings"
         },
