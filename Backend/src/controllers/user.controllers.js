@@ -277,4 +277,50 @@ const getCurrentUser= asyncHandler(async(req,res)=>{
     .json(200, req.user, "Current user data fetched successfully")
 })
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser}
+const updateUserDetails= asyncHandler(async(req,res)=>{
+    const {fullname, phone, licenceNumber, address}= req.body
+
+    const userID= req.user?._id
+    const updatedData= {}
+
+    if(fullname) updatedData.fullname=fullname || "";
+    if(phone) updatedData.phone=phone || "";
+    if(licenceNumber) updatedData.licenceNumber=licenceNumber || "";
+    if(address){
+        updatedData.address={
+            addressline1: address.addressline1 || "",
+            addressline2: address.addressline2 || "",
+            city: addresss.city || "",
+            state: address.state || "",
+            postalcode: address.postalcode || "",
+            country: address.country || "INDIA"
+
+        };
+    }
+
+    const updateUserData= await User.findByIdAndUpdate(
+        userID,
+        {
+            $set: updateUserData
+        },
+        {
+            new: true
+        }
+    ).select("-password -refreshToken");
+
+    if (!updateUserData) {
+        throw new ApiError(400, "User notfound")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200, 
+            updateUserData, 
+            "User data updated successfully"
+        )
+    );
+})
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser, updateUserDetails}
