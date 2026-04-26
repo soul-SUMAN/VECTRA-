@@ -290,7 +290,7 @@ const updateUserDetails= asyncHandler(async(req,res)=>{
         updatedData.address={
             addressline1: address.addressline1 || "",
             addressline2: address.addressline2 || "",
-            city: addresss.city || "",
+            city: address.city || "",
             state: address.state || "",
             postalcode: address.postalcode || "",
             country: address.country || "INDIA"
@@ -301,7 +301,7 @@ const updateUserDetails= asyncHandler(async(req,res)=>{
     const updateUserData= await User.findByIdAndUpdate(
         userID,
         {
-            $set: updateUserData
+            $set: updatedData
         },
         {
             new: true
