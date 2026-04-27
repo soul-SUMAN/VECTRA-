@@ -19,7 +19,7 @@ const carSchema=new mongoose.Schema(
         year: Number,
         fuelType:{
             type:String,
-            enum:["Petrol","Disel","CNG","Electric"]
+            enum:["Petrol","Diesel","CNG","Electric"]
         },
         engine:{
             type:Number

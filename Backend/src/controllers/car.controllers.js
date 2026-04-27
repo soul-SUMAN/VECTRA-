@@ -48,3 +48,94 @@ const addCar= asyncHandler(async(req,res)=>{
     .json(200, car, "Car added successfully");
 })
 
+
+
+const updateCarData= asyncHandler(async(req,res)=>{
+    const isAdmin= req.User?.role
+    if (!isAdmin) {
+        throw new ApiError(403, "Only admin can update the car details")
+    }
+
+    const {carId}= req.params;
+
+    const {
+        name,
+        bodyType,
+        model,
+        brand,
+        year,
+        fuelType,
+        engine,
+        transmission,
+        seats,
+        pricePerDay,
+        location,
+        isAvailable
+
+    }= req.body
+
+    const updatedInfo={}
+    if (name) updatedInfo.name= name;
+    if (bodyType) updatedInfo.bodyType= bodyType;
+    if (model) updatedInfo.model= model;
+    if (brand) updatedInfo.brand= brand;
+    if (year) updatedInfo.year= year;
+    if (fuelType) updatedInfo.fuelType= fuelType;
+    if (engine) updatedInfo.engine= engine;
+    if (transmission) updatedInfo.transmission= transmission;
+    if (pricePerDay) updatedInfo.pricePerDay= pricePerDay;
+    if (location) updatedInfo.location= location;
+    if (typeof isAvailable=== "boolean") updatedInfo.isAvailable= isAvailable;
+
+    if (req.file?.path) {
+        const updatedImage= await uploadOnCloudinary(req.file.path);
+
+        if (!updatedImage?.url) {
+            throw new ApiError(400, "Image upload failed")
+        }
+
+        updatedInfo.image=updatedImage.url;
+    }
+
+    const updateCar= await Cars.findByIdAndUpdate(
+        carId,
+        {
+            $set: updatedInfo
+        },
+        {
+            new: true
+        }
+    )
+    if (!updateCar) {
+        throw new ApiError(404, "Car not Found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        200,
+        updateCar,
+        "Car updated successfully"
+    );
+})
+
+
+const deleteCar= asyncHandler(async(req,res)=>{
+    const isAdmin= req.User?.role
+    if (!isAdmin) {
+        throw new ApiError(403, "Only admin can delete a car")
+    }
+
+    const {carId}= req.params
+    const deleteCar= await Cars.findByIdAndDelete(carId);
+
+    if (!deleteCar) {
+        throw new ApiError(404, "car not found")
+    }
+    return res
+    .status(200)
+    .json(200, {}, "Car deleted successfully")
+})
+
+
+export {addCar, updateCarData}
