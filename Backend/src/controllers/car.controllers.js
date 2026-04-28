@@ -48,6 +48,90 @@ const addCar= asyncHandler(async(req,res)=>{
     .json(200, car, "Car added successfully");
 })
 
+// to-do searcga car feature
+const getAllCars=asyncHandler(async(req,res)=>{
+    const {
+        page = 1,
+        limit = 6,
+        keyword,
+        bodyType,
+        brand,
+        fuelType,
+        transmission,
+        seats,
+        location,
+        minPrice,
+        maxPrice,
+        isAvailable
+    } = req.query();
+
+    let matchStage={}
+
+    // keyword search
+    if(keyword){
+        matchStage.$or=[
+            {name:{$regex: keyword, $options: "i"}},
+            {brand:{$regex: keyword, $options: "i"}},
+            {bodyType:{$regex: keyword, $options: "i"}},
+            {fuelType:{$regex: keyword, $options: "i"}},
+            {transmission:{$regex: keyword, $options: "i"}},
+            {seats:{$regex: keyword, $options: "i"}},
+            {location:{$regex: keyword, $options: "i"}}
+
+        ];
+    }
+
+    // exact match filter fron dropdown dection
+
+    if(brand) matchStage.brand={ $regex: brand, $options:"i"};
+    if(bodyType) matchStage.bodyType=bodyType;
+    if(fuelType) matchStage.fuelType=fuelType;
+    if(transmission) matchStage.transmission=transmission;
+    if(location) matchStage.location={$regex: location, $options:"i"}
+
+    //pricerange filter
+    if(minPrice || maxPrice){
+        matchStage.pricePerDay={
+            ...(minPrice && {$gte: Number(minPrice)}),
+            ...(maxPrice && {$lte: Number(maxPrice)})
+        };
+    }
+
+    // is available filter
+    if(typeof isAvailable!== "undefined"){
+        matchStage.isAvailable= isAvailable=="true";
+    }
+
+    let sortStage = { createdAt: -1 };
+
+    if (sortBy === "priceLow") {
+        sortStage = { pricePerDay: 1 };
+    }
+
+    if (sortBy === "priceHigh") {
+        sortStage = { pricePerDay: -1 };
+    }
+
+    const aggregate= Cars.aggregate([
+        {
+            $match: matchStage
+        },
+        {
+            $sort: sortStage
+        }
+    ])
+
+    const options={
+        page:parseInt(page),
+        limit:parseInt(limit)
+    }
+
+    const cars= await Cars.aggregatePaginate(aggregate,options);
+
+    return res
+    .status(200)
+    .json(200, cars, "Car fatched successfully")
+})
 
 
 const updateCarData= asyncHandler(async(req,res)=>{
@@ -138,4 +222,4 @@ const deleteCar= asyncHandler(async(req,res)=>{
 })
 
 
-export {addCar, updateCarData}
+export {addCar, getAllCars, updateCarData, deleteCar}
