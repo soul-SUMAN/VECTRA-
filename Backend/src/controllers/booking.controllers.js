@@ -68,7 +68,105 @@ const createBooking= asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(200, booking, "Car successfully booked")
+    .json(200, booking, "Car successfully booked");
+});
+
+const getUserBooking= asyncHandler(async(req,res)=>{
+    const bookings= await Bookings.find({user:req.user._id})
+    .populate("car")
+    .sort({createdAt: -1})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, bookings, "User bookins fatched")
+    );
+});
+
+const getSingleBooking= asyncHandler(async(req,res)=>{
+    const {bookingId}=req.params;
+
+    const booking= await Bookings.findById(bookingId)
+    .populate("car")
+    .populate("user" , "-password");
+
+    if(!booking){
+        throw new ApiError(404, "Booking npt found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, booking,"Booking fatched successfully")
+    );
+});
+
+const cancelBooking= asyncHandler(async(req,res)=>{
+    const {bookingId}=req.params;
+
+    const booking= await Bookings.findById(bookingId)
+    if(!booking){
+        throw new ApiError(404, "Booking not found");
+    }
+
+    if(booking.user.toString() !== req.user._id.toString() && req.user.role !== "admin"){
+        throw new ApiError(403, "Not authorized");
+    }
+
+    booking.status="Cancelled";
+    await booking,save({validateBeforeSave:false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Booking cancelled successfully"))
+
 })
 
-export {createBooking}
+const updateBookingStatus= asyncHandler(async(req,res)=>{
+  if (req.user?.role != "Admin") {
+        throw new ApiError(403, "You dont have the permission")
+  }
+
+  const { bookingId }= req.params;
+  const { status }= req.body;
+
+  const booking= await Bookings.findByIdAndUpdate(
+    bookingId,
+    {
+        $set: {status}
+    },
+    {
+        new: true
+    }
+  );
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found")
+  }
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(200, booking, "Booking status updated")
+);
+
+});
+
+const getAllBookings= asyncHandler(async(req,res)=>{
+    if (req.user?.role != "Admin") {
+        throw new ApiError(403, "Admin Only")
+    }
+
+    const bookings= await Bookings.find()
+        .populate("car")
+        .populate("user", "-password")
+        .sort({createdAt: -1});
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, bookings, "All bookings fatched")
+    )
+})
+
+export {createBooking, getUserBooking, getSingleBooking, cancelBooking, updateBookingStatus, getAllBookings}
