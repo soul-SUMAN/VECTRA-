@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Cars } from "../models/Car.models.js";
 import { User } from "../models/User.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Bookings } from "../models/Booking.models.js";
 
 const addCar= asyncHandler(async(req,res)=>{
     const isAdmin= req.User?.role
@@ -40,7 +41,8 @@ const addCar= asyncHandler(async(req,res)=>{
         seats,
         pricePerDay,
         location,
-        image:uploadImage.url
+        image:uploadImage.url,
+        owner:req.user._id
     });
 
     return res
@@ -182,7 +184,10 @@ const updateCarData= asyncHandler(async(req,res)=>{
     }
 
     const updateCar= await Cars.findByIdAndUpdate(
-        carId,
+        {
+            _id:carId,
+            owner:req.user._id
+        },
         {
             $set: updatedInfo
         },
@@ -211,7 +216,12 @@ const deleteCar= asyncHandler(async(req,res)=>{
     }
 
     const {carId}= req.params
-    const deleteCar= await Cars.findByIdAndDelete(carId);
+    const deleteCar= await Cars.findByIdAndDelete(
+        {
+            _id: carId,
+            owner:req.user._id
+        }
+    );
 
     if (!deleteCar) {
         throw new ApiError(404, "car not found")
@@ -221,5 +231,21 @@ const deleteCar= asyncHandler(async(req,res)=>{
     .json(200, {}, "Car deleted successfully")
 })
 
+const getMyCars= asyncHandler(async(req,res)=>{
+    if (req.user?.role !=isAdmin) {
+        throw new ApiError(403, "Admin only can access")
+    }
 
-export {addCar, getAllCars, updateCarData, deleteCar}
+    const myCars= await Bookings.find(
+        {owner:req.user._id}
+    );
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, myCars, "Admin cars fatched")
+    );
+
+})
+
+export {addCar, getAllCars, updateCarData, deleteCar, getMyCars}

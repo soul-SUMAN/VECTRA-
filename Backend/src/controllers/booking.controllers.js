@@ -57,6 +57,7 @@ const createBooking= asyncHandler(async(req,res)=>{
     const booking= await Bookings.create({
         user: req.user._id,
         car,
+        admin:carData.owner,
         startDate: start,
         endDate: end,
         requiredDriver: requiredDriver || false,
@@ -131,7 +132,10 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
   const { status }= req.body;
 
   const booking= await Bookings.findByIdAndUpdate(
-    bookingId,
+    {
+        _id:bookingId,
+        owner:req.user._id
+    },
     {
         $set: {status}
     },
@@ -169,4 +173,20 @@ const getAllBookings= asyncHandler(async(req,res)=>{
     )
 })
 
-export {createBooking, getUserBooking, getSingleBooking, cancelBooking, updateBookingStatus, getAllBookings}
+const getAdminBookings= asyncHandler(async(req,res)=>{
+    if(req.user?.role != "Admin"){
+        throw new ApiError(403, "Only for Admin")
+    }
+
+    const adminBookings= await Bookings.find({admin:req.user._id})
+    .populate("car")
+    .populate("user", "-password");
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, adminBookings, "Admin bookings fatched")
+    );
+})
+
+export {createBooking, getUserBooking, getSingleBooking, cancelBooking, updateBookingStatus, getAllBookings, getAdminBookings}

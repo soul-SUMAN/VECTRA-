@@ -31,7 +31,11 @@ const bookingSchema=new mongoose.Schema(
             default:"Pending"
         },
         pickupLocation: String,
-        dropLocation: String
+        dropLocation: String,
+        admin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+        }
     },
     {
         timestamps:true
