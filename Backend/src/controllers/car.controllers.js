@@ -64,8 +64,11 @@ const getAllCars=asyncHandler(async(req,res)=>{
         location,
         minPrice,
         maxPrice,
-        isAvailable
-    } = req.query();
+        startDate,
+        endDate,
+        isAvailable,
+        sortBy
+    } = req.query;
 
     let matchStage={}
 
@@ -77,10 +80,11 @@ const getAllCars=asyncHandler(async(req,res)=>{
             {bodyType:{$regex: keyword, $options: "i"}},
             {fuelType:{$regex: keyword, $options: "i"}},
             {transmission:{$regex: keyword, $options: "i"}},
-            {seats:{$regex: keyword, $options: "i"}},
-            {location:{$regex: keyword, $options: "i"}}
+            {location:{$regex: keyword, $options: "i"}},
+            
 
         ];
+        
     }
 
     // exact match filter fron dropdown dection
@@ -90,6 +94,7 @@ const getAllCars=asyncHandler(async(req,res)=>{
     if(fuelType) matchStage.fuelType=fuelType;
     if(transmission) matchStage.transmission=transmission;
     if(location) matchStage.location={$regex: location, $options:"i"}
+    if(seats) matchStage.seats = Number(seats)
 
     //pricerange filter
     if(minPrice || maxPrice){
@@ -99,29 +104,106 @@ const getAllCars=asyncHandler(async(req,res)=>{
         };
     }
 
-    // is available filter
-    if(typeof isAvailable!== "undefined"){
-        matchStage.isAvailable= isAvailable=="true";
+    // // is available filter
+    // if(typeof isAvailable!== "undefined"){
+    //     matchStage.isAvailable= isAvailable=="true";
+    // }
+
+
+
+    // const aggregate= Cars.aggregate([
+    //     {
+    //         $match: matchStage
+    //     },
+    //     {
+    //         $sort: sortStage
+    //     }
+    // ])
+
+    //  date validation
+    if (startDate && isNaN(new Date(startDate))) {
+        throw new ApiError(400, "Invalid startDate");
     }
+    if (endDate && isNaN(new Date(endDate))) {
+        throw new ApiError(400, "Invalid endDate");
+    }
+    if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+        throw new ApiError(400, "Start date must be before end date");
+    }
+
+    const start= startDate? new Date(startDate): null;
+    const end= endDate? new Date(endDate): null;
+
 
     let sortStage = { createdAt: -1 };
 
     if (sortBy === "priceLow") {
         sortStage = { pricePerDay: 1 };
     }
-
     if (sortBy === "priceHigh") {
         sortStage = { pricePerDay: -1 };
     }
+
+
 
     const aggregate= Cars.aggregate([
         {
             $match: matchStage
         },
         {
-            $sort: sortStage
+            $lookup:{
+                from: "bookings",
+                localField: "_id",
+                foreignField: "car",
+                as: "bookings"
+            }
+        },
+        {
+            $addFields:{
+                isAvailable:{
+                    $cond:{
+                        if:{
+                            $and:[
+                                { $ifNull:[start, false] },
+                                { $ifNull:[end, false] },
+                            ]
+                        },
+                        then:{
+                            $not:{
+                                $anyElementTrue:{
+                                    $map:{
+                                        input:"$bookings",
+                                        as: "b",
+                                        in:{
+                                            $and:[
+                                                { $lte: ["$$b.startDate", end] },
+                                                { $gte: ["$$b.endDate", start] }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        else: true
+                    }
+                } 
+            }
+        },
+        
+         ...(typeof isAvailable !== "undefined"
+                ? [{ $match: { isAvailable: isAvailable === "true" } }]
+                : []),
+        {
+            $project:{
+                bookings: 0
+            }
+        },
+        {
+           $sort: sortStage 
         }
+
     ])
+
 
     const options={
         page:parseInt(page),
@@ -132,7 +214,9 @@ const getAllCars=asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(200, cars, "Car fatched successfully")
+    .json(
+        new ApiResponse(200, cars, "Car fetched successfully") 
+    )
 })
 
 
