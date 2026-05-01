@@ -13,7 +13,7 @@ routes.route("/").post(verifyJWT, addedToWishlist);
 routes.route("/my-wishlist").get(verifyJWT, getWishlist);
 
 routes.route("/clear/:carId").delete(verifyJWT, removeFromWishlist);
-routes.route("/chear/all").delete(verifyJWTq, clearWishlist);
+routes.route("/clear/all").delete(verifyJWT, clearWishlist);
 
 export default routes;
 

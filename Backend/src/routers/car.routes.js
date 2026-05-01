@@ -9,7 +9,7 @@ import {    addCar,
         } from "../controllers/car.controllers.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
-import routes from "./user.routes.js";
+// import routes from "./user.routes.js";
 
 const routes= Router();
 //public access all cars

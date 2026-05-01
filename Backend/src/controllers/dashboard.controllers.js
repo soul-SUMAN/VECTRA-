@@ -1,8 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Cars } from "../models/car.model.js";
-import { Bookings } from "../models/bookings.models.js";
+import { Cars } from "../models/Car.models.js";
+import { Bookings } from "../models/Booking.models.js";
+import { User } from "../models/User.models.js";
 
 const getAdminDashboard = asyncHandler(async (req, res) => {
 
