@@ -332,4 +332,61 @@ const getMyCars= asyncHandler(async(req,res)=>{
 
 })
 
-export {addCar, getAllCars, updateCarData, deleteCar, getMyCars}
+const checkCarAvailabality= asyncHandler(async(req,res)=>{
+    const { carId }= req.params;
+    const { startDate, endDate }= req.query;
+
+    if (!startDate || !endDate) {
+        throw new ApiError(400, "Start and End date is required")
+    }
+    if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
+        throw new ApiError(400, "Invalid date format")
+    }
+    if(new Date(startDate)>= new Date(endDate)){
+        throw new ApiError(400, "Start date must be before end date")
+    }
+
+    const start= new Date(startDate);
+    const end= new Date(endDate);
+
+    const overlapingBooking= await Bookings.findOne({
+        car: carId,
+        status: { $in:[ "Pending", "Confirm" ] },
+        $or:[
+            {
+                startDate: {$lte: end},
+                endDate: {$gte: start}
+            }
+        ]
+    });
+
+    const isAvailable= !overlapingBooking
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {isAvailable}, isAvailable ? "Car is available" : "Car is not available")
+    )
+});
+
+const getSingleCar= asyncHandler(async(req,res)=>{
+    const { carId }= req.params;
+
+    if(!carId){
+        throw new ApiError(400, "Car need to be select to see details")
+    }
+
+    const car= await Cars.findById(carId);
+
+    if (!car) {
+        throw new ApiError(404, "Car not found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, car, "Car fatched successfully")
+    )
+});
+
+export {addCar, getAllCars, updateCarData, deleteCar, getMyCars, checkCarAvailabality, getSingleCar}
