@@ -17,7 +17,7 @@ routes.route("/my-bookings").get(verifyJWT, getUserBooking);
 
 routes.route("/admin/all").get(verifyJWT, getAllBookings);
 routes.route("/admin/booking-list").get(verifyJWT, getAdminBookings);
-routes.route("/admin/:bookingId").get(verifyJWT, updateBookingStatus);
+routes.route("/admin/:bookingId").patch(verifyJWT, updateBookingStatus);
 
 routes.route("/:bookingId")
     .get(verifyJWT, getSingleBooking)

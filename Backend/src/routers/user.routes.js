@@ -32,7 +32,7 @@ routes.route("/me").get(verifyJWT, getCurrentUser);
 
 routes.route("/update-profile").patch(verifyJWT, updateUserDetails);
 
-routes.route("/update-avtar").patch(
+routes.route("/update-avatar").patch(
     verifyJWT, 
     upload.single("avtar"), 
     updateUserAvatar
