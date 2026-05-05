@@ -274,11 +274,16 @@ const changePassword= asyncHandler(async(req, res)=>{
 const getCurrentUser= asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(200, req.user, "Current user data fetched successfully")
+    .json(
+        new ApiResponse(200, req.user, "Current user data fetched successfully")    
+    )
 })
 
 const updateUserDetails= asyncHandler(async(req,res)=>{
     const {fullname, phone, licenceNumber, address}= req.body
+
+    // // Debug logs
+    // console.log("[updateUserDetails] req.body:", req.body);
 
     const userID= req.user?._id
     const updatedData= {}
@@ -294,9 +299,10 @@ const updateUserDetails= asyncHandler(async(req,res)=>{
             state: address.state || "",
             postalcode: address.postalcode || "",
             country: address.country || "INDIA"
-
         };
     }
+
+    // console.log("[updateUserDetails] updatedData:", updatedData);
 
     const updateUserData= await User.findByIdAndUpdate(
         userID,
@@ -304,7 +310,7 @@ const updateUserDetails= asyncHandler(async(req,res)=>{
             $set: updatedData
         },
         {
-            new: true
+            returnDocument: "after"
         }
     ).select("-password -refreshToken");
 
@@ -344,7 +350,7 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
             }
         },
         {
-            new: true
+            returnDocument: "after"
         }
     ).select("-password -refreshToken")
 

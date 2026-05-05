@@ -34,7 +34,7 @@ routes.route("/update-profile").patch(verifyJWT, updateUserDetails);
 
 routes.route("/update-avatar").patch(
     verifyJWT, 
-    upload.single("avtar"), 
+    upload.single("avatar"), 
     updateUserAvatar
 );
 
