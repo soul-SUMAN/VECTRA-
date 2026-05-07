@@ -7,7 +7,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Bookings } from "../models/Booking.models.js";
 
 const addCar= asyncHandler(async(req,res)=>{
-    const isAdmin= req.User?.role
+    const isAdmin= req.user?.role === "admin"
     if (!isAdmin) {
         throw new ApiError(403, "Only admin can add cars")
     }
@@ -47,7 +47,8 @@ const addCar= asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(200, car, "Car added successfully");
+    .json(
+        new ApiResponse(200, car, "Car added successfully"));
 })
 
 // to-do searcga car feature
@@ -216,12 +217,12 @@ const getAllCars=asyncHandler(async(req,res)=>{
     .status(200)
     .json(
         new ApiResponse(200, cars, "Car fetched successfully") 
-    )
-})
+    );
+});
 
 
 const updateCarData= asyncHandler(async(req,res)=>{
-    const isAdmin= req.User?.role
+    const isAdmin= req.user?.role === "admin"
     if (!isAdmin) {
         throw new ApiError(403, "Only admin can update the car details")
     }
@@ -286,15 +287,18 @@ const updateCarData= asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(
+        new ApiResponse(
         200,
         updateCar,
         "Car updated successfully"
+        )
+        
     );
 })
 
 
 const deleteCar= asyncHandler(async(req,res)=>{
-    const isAdmin= req.User?.role
+    const isAdmin= req.user?.role === "admin"
     if (!isAdmin) {
         throw new ApiError(403, "Only admin can delete a car")
     }
@@ -312,22 +316,22 @@ const deleteCar= asyncHandler(async(req,res)=>{
     }
     return res
     .status(200)
-    .json(200, {}, "Car deleted successfully")
+    .json(new ApiResponse(200, {}, "Car deleted successfully"));
 })
 
 const getMyCars= asyncHandler(async(req,res)=>{
-    if (req.user?.role !=isAdmin) {
-        throw new ApiError(403, "Admin only can access")
+    if (req.user?.role !== "admin") {
+        throw new ApiError(403, "Admin only can access their cars")
     }
 
-    const myCars= await Bookings.find(
+    const myCars= await Cars.find(
         {owner:req.user._id}
     );
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, myCars, "Admin cars fatched")
+        new ApiResponse(200, myCars, "Admin cars fetched")
     );
 
 })
