@@ -28,7 +28,9 @@ const carSchema=new mongoose.Schema(
             type:String,
             enum:["Manual","Automatic"]
         },
-        seats: Number,
+        seats: {
+            type:Number
+        },
         pricePerDay:{
             type:Number,
             required:true

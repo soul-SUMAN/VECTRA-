@@ -28,7 +28,7 @@ const createBooking= asyncHandler(async(req,res)=>{
         throw new ApiError(400, "End date must be after start date")
     }
 
-    const carData= await Cars.findById(car);
+    const carData= await Cars.findById(Number(car));
 
     if(!carData){
         throw new ApiError(404, "Car not found")

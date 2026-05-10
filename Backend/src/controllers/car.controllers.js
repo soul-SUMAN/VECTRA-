@@ -14,8 +14,24 @@ const addCar= asyncHandler(async(req,res)=>{
 
     const {name, bodyType, model, brand, year, fuelType, engine, transmission, seats, pricePerDay, location} =req.body;
 
-    if([name, bodyType, model, brand, year, fuelType, engine, transmission, seats, pricePerDay, location].some((fields)=>fields?.trim()==="")){
-        throw new ApiError(400, "All fields are requeired")
+    // if([name, bodyType, model, brand, year, fuelType, engine, transmission, seats, pricePerDay, location].some((fields)=>fields?.trim()==="")){
+    //     throw new ApiError(400, "All fields are requeired")
+    // }
+
+    if(
+        !name ||
+        !bodyType ||
+        !model ||
+        !brand ||
+        !year ||
+        !fuelType ||
+        !engine ||
+        !transmission ||
+        !seats ||
+        !pricePerDay ||
+        !location
+    ){
+        throw new ApiError(400, "All fields are required")
     }
 
     const carImageLocalPath=req.file?.path;
@@ -250,25 +266,44 @@ const updateCarData= asyncHandler(async(req,res)=>{
     if (bodyType) updatedInfo.bodyType= bodyType;
     if (model) updatedInfo.model= model;
     if (brand) updatedInfo.brand= brand;
-    if (year) updatedInfo.year= year;
     if (fuelType) updatedInfo.fuelType= fuelType;
-    if (engine) updatedInfo.engine= engine;
     if (transmission) updatedInfo.transmission= transmission;
-    if (pricePerDay) updatedInfo.pricePerDay= pricePerDay;
     if (location) updatedInfo.location= location;
+    
+    // parse and validate seats
+    if (seats !== undefined) {
+        const s = parseInt(seats, 10);
+        if (!Number.isNaN(s)) {
+            updatedInfo.seats = s;
+        }
+    }
+    if (typeof pricePerDay !== "undefined") updatedInfo.pricePerDay= Number(pricePerDay);
+    if (typeof year !== "undefined") updatedInfo.year= Number(year);
+    if (typeof engine !== "undefined") updatedInfo.engine= Number(engine);
     if (typeof isAvailable=== "boolean") updatedInfo.isAvailable= isAvailable;
 
-    if (req.file?.path) {
-        const updatedImage= await uploadOnCloudinary(req.file.path);
+    console.log('updateCarData - updatedInfo before image handling:', updatedInfo);
 
-        if (!updatedImage?.url) {
+// image update handling
+    newImage=req.file?.path;
+    // console.log(newImage)
+
+    if (!newImage) {
+        throw new ApiError(400, "Car image is missing")
+    }
+
+    const upldatedImage= await uploadOnCloudinary(newImage);
+
+    if (!upldatedImage.url) {
             throw new ApiError(400, "Image upload failed")
         }
 
-        updatedInfo.image=updatedImage.url;
-    }
+        updatedInfo.image=upldatedImage.url;
+  
+    // debug: log updatedInfo to verify fields being set
+    console.log('updateCarData - updatedInfo:', updatedInfo);
 
-    const updateCar= await Cars.findByIdAndUpdate(
+    const updateCar= await Cars.findOneAndUpdate(
         {
             _id:carId,
             owner:req.user._id
@@ -277,7 +312,7 @@ const updateCarData= asyncHandler(async(req,res)=>{
             $set: updatedInfo
         },
         {
-            new: true
+            new:true
         }
     )
     if (!updateCar) {
@@ -304,7 +339,7 @@ const deleteCar= asyncHandler(async(req,res)=>{
     }
 
     const {carId}= req.params
-    const deleteCar= await Cars.findByIdAndDelete(
+    const deleteCar= await Cars.findOneAndUpdate(
         {
             _id: carId,
             owner:req.user._id
@@ -320,7 +355,8 @@ const deleteCar= asyncHandler(async(req,res)=>{
 })
 
 const getMyCars= asyncHandler(async(req,res)=>{
-    if (req.user?.role !== "admin") {
+    const isAdmin= req.user?.role === "admin"
+    if (!isAdmin) {
         throw new ApiError(403, "Admin only can access their cars")
     }
 
