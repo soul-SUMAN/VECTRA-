@@ -285,20 +285,20 @@ const updateCarData= asyncHandler(async(req,res)=>{
     console.log('updateCarData - updatedInfo before image handling:', updatedInfo);
 
 // image update handling
-    newImage=req.file?.path;
+    // newImage=req.file?.path;
     // console.log(newImage)
 
-    if (!newImage) {
-        throw new ApiError(400, "Car image is missing")
-    }
+    // if (!newImage) {
+    //     throw new ApiError(400, "Car image is missing")
+    // }
 
-    const upldatedImage= await uploadOnCloudinary(newImage);
+    // const upldatedImage= await uploadOnCloudinary(newImage);
 
-    if (!upldatedImage.url) {
-            throw new ApiError(400, "Image upload failed")
-        }
+    // if (!upldatedImage.url) {
+    //         throw new ApiError(400, "Image upload failed")
+    //     }
 
-        updatedInfo.image=upldatedImage.url;
+    //     updatedInfo.image=upldatedImage.url;
   
     // debug: log updatedInfo to verify fields being set
     console.log('updateCarData - updatedInfo:', updatedInfo);
@@ -330,6 +330,48 @@ const updateCarData= asyncHandler(async(req,res)=>{
         
     );
 })
+
+const updateCarImage= asyncHandler(async(req,res)=>{
+    const isAdmin= req.user?.role === "admin"
+    if(!isAdmin){
+        new ApiError(403, "only admin can update the car image")
+    }
+    const {carId}= req.params;
+
+    const newImage=req.file?.path;
+    if (!newImage) {
+        throw new ApiError(400, "Car image is missing")
+    }  
+    const upldatedImage= await uploadOnCloudinary(newImage);
+    if (!upldatedImage.url) {
+        throw new ApiError(400, "Image upload failed")
+    }
+
+    const updateCarImage= await Cars.findOneAndUpdate(
+        {
+            _id:carId,  
+            owner:req.user._id
+        
+        },
+        {
+            $set:{ image: upldatedImage.url}
+        },
+        {
+            new:true
+        }
+    );
+
+    if (!updateCarImage) {
+        throw new ApiError(404, "Car not Found")
+    }   
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updateCarImage, "Car image updated successfully")
+    )
+
+})  
 
 
 const deleteCar= asyncHandler(async(req,res)=>{
@@ -429,4 +471,4 @@ const getSingleCar= asyncHandler(async(req,res)=>{
     )
 });
 
-export {addCar, getAllCars, updateCarData, deleteCar, getMyCars, checkCarAvailabality, getSingleCar}
+export {addCar, getAllCars, updateCarData, updateCarImage, deleteCar, getMyCars, checkCarAvailabality, getSingleCar}

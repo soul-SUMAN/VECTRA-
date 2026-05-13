@@ -28,13 +28,19 @@ routes.route("/").post(
     verifyJWT,
     upload.single("image"),
     addCar 
-)
+);
 
 routes.route("/:carId").patch(
     verifyJWT,
-    upload.single("image"),
     updateCarData
-)
+);
+
+routes.route("/:carId/image").patch(
+    verifyJWT,
+    upload.single("image"),
+    updateCarImage
+);
+
 
 routes.route("/:carId").delete(verifyJWT, deleteCar);
 
