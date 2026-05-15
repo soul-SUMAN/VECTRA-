@@ -5,7 +5,8 @@ import {    addCar,
             deleteCar, 
             getMyCars,
             checkCarAvailabality,
-            getSingleCar 
+            getSingleCar,
+            updateCarImage
         } from "../controllers/car.controllers.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
