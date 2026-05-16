@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink} from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
 
 export default function Navbar() {
@@ -125,39 +125,42 @@ export default function Navbar() {
                          md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
           >
             <li>
-              <Link to="/"
-                className="block py-2 px-3 text-white bg-yellow-300 rounded-sm md:bg-transparent md:text-yellow-300 md:p-0 md:dark:text-yellow-300"
+              <NavLink to="/"
+                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
                 aria-current="page"
               >
                 Home
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link to="/cars"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+              <NavLink to="/cars"
+                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
+                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
+                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
               >
                 Cars
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link to="/bookings"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+              <NavLink to="/bookings"
+                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
+                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
+                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
               >
                 My Bookings
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link to="/wishlist"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+              <NavLink to="/wishlist"
+                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
+                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
+                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
               >
                 Wishlist
-              </Link>
+              </NavLink>
             </li>
             <li>
               <HashLink smooth to="/#about"
@@ -180,14 +183,14 @@ export default function Navbar() {
               </HashLink>
             </li>
             <li>
-              <HashLink smooth to="/admin"
-                href="#contact"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+              <NavLink to="/admin"
+                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
+                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
+                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
               >
                 Admin
-              </HashLink>
+              </NavLink>
             </li>
           </ul>
         </div>

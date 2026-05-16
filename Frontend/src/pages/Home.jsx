@@ -84,10 +84,10 @@ export default function Home() {
                                 </svg>
                               </div>
                               <input
-                                id="datepicker-range-end"
+                                id="datepicker-range-start"
                                 name="end"
                                 type="text"
-                                placeholder="Drop-off date"
+                                placeholder="Pickup date"
                                 className="w-full sm:w-auto pl-10 py-2.5 px-4 flex-1 border border-gray-300 rounded-lg shadow-sm 
                                           focus:ring-yellow-500 focus:border-yellow-500 
                                           dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
@@ -109,10 +109,10 @@ export default function Home() {
                                 </svg>
                               </div>
                               <input
-                                id="datepicker-range-start"
+                                id="datepicker-range-end"
                                 name="start"
                                 type="text"
-                                placeholder="Pickup date"
+                                placeholder="Drop-off date"
                                 className="w-full sm:w-auto pl-10 py-2.5 px-4 flex-1 border border-gray-300 rounded-lg shadow-sm 
                                           focus:ring-yellow-500 focus:border-yellow-500 
                                           dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
