@@ -17,12 +17,12 @@ const wishlist = [
 
 export default function Wishlist() {
   return (
-    <div className="w-full px-20 mx-auto bg-gray-50 dark:bg-gray-900 py-12">
+    <div className="w-full min-h-150 px-8 py-12 mx-auto bg-slate-950 text-white">
       <h2 className="text-4xl font-bold text-center text-orange-500 mb-10">
         My Wishlist
       </h2>
       {wishlist.length === 0 ? (
-        <p className="text-center text-gray-600 dark:text-gray-300">No cars in wishlist.</p>
+        <p className="text-center text-gray-300">No cars in wishlist.</p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2">
           {wishlist.map((car) => (

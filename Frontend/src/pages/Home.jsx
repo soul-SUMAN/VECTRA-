@@ -2,8 +2,9 @@
 export default function Home() {
   return (
     <>
-        <div>
-                
+
+    {/* home section */}
+        <div> 
             <div id="home" className="relative "
             style={
                 {backgroundImage: "url('/cars.png')",
@@ -169,17 +170,11 @@ export default function Home() {
             </div>
             
             </div>
-            
         </div>
 
+    {/* about section */}
 
-
-
-
-
-
-
- <section id="about" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
+    <section id="about" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
       <div className="w-full max-w-7xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12 items-center">
         
         {/* LEFT SIDE → Car Image */}
@@ -228,13 +223,9 @@ export default function Home() {
       </div>
     </section>
 
+    {/* contact section */}
 
-
-
-
-
-
-     <section id= "contact" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
+    <section id= "contact" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
       <div className="w-full max-w-6xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12">
         
         {/* LEFT SIDE → Info */}
@@ -307,6 +298,55 @@ export default function Home() {
         </div>
       </div>
     </section>
+
+    {/* faq section */}
+{/*     
+    <section id= "faq" className="py-24 px-4   relative">
+
+        <div id="accordion-color" data-accordion="collapse" class="rounded-base rounded-2xl border border-default overflow-hidden shadow-xs">
+          <h2 id="accordion-color-heading-1">
+            <button type="button" class="flex items-center hover:bg-amber-600 justify-between w-full p-5 font-medium rtl:text-right text-body rounded-t-base border border-t-0 border-x-0 border-b-default hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-1" aria-expanded="true" aria-controls="accordion-color-body-1">
+              <span>What is Flowbite?</span>
+              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
+            </button>
+          </h2>
+          <div id="accordion-color-body-1" class="hidden border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-color-heading-1">
+            <div class="p-4 md:p-5">
+              <p class="mb-2 text-body">Flowbite is an open-source library of interactive components built on top of Tailwind CSS including buttons, dropdowns, modals, navbars, and more.</p>
+              <p class="text-body">Check out this guide to learn how to <a href="/docs/getting-started/introduction/" class="text-fg-brand hover:underline">get started</a> and start developing websites even faster with components on top of Tailwind CSS.</p>
+            </div>
+          </div>
+          <h2 id="accordion-color-heading-2">
+            <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body border border-x-0 border-b-default border-t-0 hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-2" aria-expanded="false" aria-controls="accordion-color-body-2">
+              <span>Is there a Figma file available?</span>
+              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
+            </button>
+          </h2>
+          <div id="accordion-color-body-2" class="hidden border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-color-heading-2">
+            <div class="p-4 md:p-5">
+              <p class="mb-2 text-body">Flowbite is first conceptualized and designed using the Figma software so everything you see in the library has a design equivalent in our Figma file.</p>
+              <p class="text-body">Check out the <a href="https://flowbite.com/figma/" class="text-fg-brand hover:underline">Figma design system</a> based on the utility classes from Tailwind CSS and components from Flowbite.</p>
+            </div>
+          </div>
+          <h2 id="accordion-color-heading-3">
+            <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-3" aria-expanded="false" aria-controls="accordion-color-body-3">
+              <span>What are the differences between Flowbite and Tailwind UI?</span>
+              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
+            </button>
+          </h2>
+          <div id="accordion-color-body-3" class="hidden" aria-labelledby="accordion-color-heading-3">
+            <div class="p-4 md:p-5 border border-t-default border-b-0 border-x-0">
+              <p class="mb-2 text-body">The main difference is that the core components from Flowbite are open source under the MIT license, whereas Tailwind UI is a paid product. Another difference is that Flowbite relies on smaller and standalone components, whereas Tailwind UI offers sections of pages.</p>
+              <p class="mb-2 text-body">However, we actually recommend using both Flowbite, Flowbite Pro, and even Tailwind UI as there is no technical reason stopping you from using the best of two worlds.</p>
+              <p class="mb-2 text-body">Learn more about these technologies:</p>
+              <ul class="ps-5 text-body list-disc">
+                <li><a href="https://flowbite.com/pro/" class="text-fg-brand hover:underline">Flowbite Pro</a></li>
+                <li><a href="https://tailwindui.com/" rel="nofollow" class="text-fg-brand hover:underline">Tailwind UI</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+    </section> */}
 
     </>
   )

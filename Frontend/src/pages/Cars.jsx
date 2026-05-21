@@ -33,7 +33,7 @@ const cars = [
 
 export default function Cars() {
   return (
-    <div className=" w-full mx-auto px-16 py-12 bg-gray-50 dark:bg-gray-900">
+    <div className=" w-full mx-auto min-h-150 px-16 py-12 bg-gray-50 dark:bg-gray-900">
       <h2 className="text-4xl font-bold text-center text-orange-500 mb-10">
         Available Cars
       </h2>
