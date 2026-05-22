@@ -2,156 +2,92 @@ import React, { useState } from "react";
 
 function Login() {
   const [activeTab, setActiveTab] = useState("login");
+  const [form, setForm] = useState({ email: "", password: "", fullname: "" });
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // placeholder: call API login/register
+    console.log(activeTab, form);
+  };
 
   return (
-    <div className="bg-[#0d0d0d] text-white font-sans min-h-screen justify-center  flex items-center">
-      <section className="w-full max-w-sm mx-auto text-center bg-[#1a1a1a] p-8 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.6)]">
-        <h2 className="text-[22px] font-bold mb-5">My Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b1220] to-[#0d0d0d] font-sans px-4">
+      <section className="w-full max-w-2xl bg-slate-900/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-slate-800">
+        <div className="md:grid md:grid-cols-2">
+          <div className="hidden md:flex flex-col items-center justify-center p-10 bg-gradient-to-b from-slate-800 to-slate-900">
+            <img src="/VECTRA-LOGO.png" alt="logo" className="w-20 h-20 rounded-full mb-4" />
+            <h2 className="text-2xl font-bold text-white">Welcome back</h2>
+            <p className="mt-2 text-slate-300 text-center max-w-xs">Rent the car you love. Manage bookings, wishlist and more from your account.</p>
+          </div>
 
-        {/* Tabs */}
-        <div className="flex justify-center border-b border-[#333] mb-6">
-          <button
-            className={`flex-1 py-3 text-[16px] transition-colors ${
-              activeTab === "login"
-                ? "font-bold border-b-2 border-yellow-500 text-white"
-                : "text-[#aaa] hover:text-white"
-            }`}
-            onClick={() => setActiveTab("login")}
-          >
-            Login
-          </button>
-          <button
-            className={`flex-1 py-3 text-[16px] transition-colors ${
-              activeTab === "signup"
-                ? "font-bold border-b-2 border-yellow-500 text-white"
-                : "text-[#aaa] hover:text-white"
-            }`}
-            onClick={() => setActiveTab("signup")}
-          >
-            Signup
-          </button>
-        </div>
-
-        {/* Forms */}
-        <div className="mt-5">
-          {activeTab === "login" && (
-            <form className="flex flex-col gap-4">
-              <h3 className="text-lg font-semibold mb-2 text-[#f1f1f1]">
-                Login to your account
-              </h3>
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                className="p-3 border border-[#333] rounded-lg text-sm bg-[#111] text-white focus:outline-none focus:border-amber-500"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                className="p-3 border border-[#333] rounded-lg text-sm bg-[#111] text-white focus:outline-none focus:border-yellow-500"
-              />
-              <button
-                type="submit"
-                className="p-3 bg-orange-400 text-white rounded-lg text-[16px] font-medium transition-colors hover:bg-orange-500"
-              >
-                Login
-              </button>
-
-              {/* Divider */}
-              <div className="relative my-2 text-sm text-[#888]">
-                <span className="px-2 bg-[#1a1a1a] relative z-10">or</span>
-                <div className="absolute top-1/2 left-0 w-2/5 h-px bg-[#333]" />
-                <div className="absolute top-1/2 right-0 w-2/5 h-px bg-[#333]" />
+          <div className="p-8 md:p-10">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl md:text-2xl text-white font-semibold">My Account</h3>
+              <div className="flex gap-2 bg-slate-800 rounded-full p-1">
+                <button
+                  onClick={() => setActiveTab("login")}
+                  className={`px-4 py-2 rounded-full text-sm ${activeTab === "login" ? "bg-yellow-500 text-slate-900 font-semibold" : "text-slate-300 hover:text-white"}`}
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setActiveTab("signup")}
+                  className={`px-4 py-2 rounded-full text-sm ${activeTab === "signup" ? "bg-yellow-500 text-slate-900 font-semibold" : "text-slate-300 hover:text-white"}`}
+                >
+                  Signup
+                </button>
               </div>
+            </div>
 
-              {/* Social Login */}
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 p-3 text-[15px] rounded-lg border border-[#333] bg-[#111] text-white transition-colors hover:bg-[#222]"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/355037/google.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
-                Continue with Google
-              </button>
-              {/* <button
-                type="button"
-                className="flex items-center justify-center gap-2 p-3 text-[15px] rounded-lg bg-yellow-500 text-white transition-colors hover:bg-yellow-600"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/349574/facebook.svg"
-                  alt="Facebook"
-                  className="w-5 h-5"
-                />
-                Continue with Facebook
-              </button> */}
-            </form>
-          )}
-          {activeTab === "signup" && (
-            <form className="flex flex-col gap-4">
-              <h3 className="text-lg font-semibold mb-2 text-[#f1f1f1]">
-                Create an account
-              </h3>
-              <input
-                type="text"
-                placeholder="Full Name"
-                required
-                className="p-3 border border-[#333] rounded-lg text-sm bg-[#111] text-white focus:outline-none focus:border-yellow-500"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                className="p-3 border border-[#333] rounded-lg text-sm bg-[#111] text-white focus:outline-none focus:border-yellow-500"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                className="p-3 border border-[#333] rounded-lg text-sm bg-[#111] text-white focus:outline-none focus:border-yellow-500"
-              />
-              <button
-                type="submit"
-                className="p-3 bg-orange-400 text-white rounded-lg text-[16px] font-medium transition-colors hover:bg-orange-500"
-              >
-                Signup
-              </button>
+            {activeTab === "login" ? (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <label className="text-sm text-slate-300">Email</label>
+                <input name="email" value={form.email} onChange={handleChange} required type="email" className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
 
-              {/* Divider */}
-              <div className="relative my-2 text-sm text-[#888]">
-                <span className="px-2 bg-[#1a1a1a] relative z-10">or</span>
-                <div className="absolute top-1/2 left-0 w-2/5 h-px bg-[#333]" />
-                <div className="absolute top-1/2 right-0 w-2/5 h-px bg-[#333]" />
-              </div>
+                <label className="text-sm text-slate-300">Password</label>
+                <input name="password" value={form.password} onChange={handleChange} required type="password" className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
 
-              {/* Social Signup */}
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 p-3 text-[15px] rounded-lg border border-[#333] bg-[#111] text-white transition-colors hover:bg-[#222]"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/355037/google.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
-                Continue with Google
-              </button>
-              {/* <button
-                type="button"
-                className="flex items-center justify-center gap-2 p-3 text-[15px] rounded-lg bg-yellow-500 text-white transition-colors hover:bg-yellow-600"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/349574/facebook.svg"
-                  alt="Facebook"
-                  className="w-5 h-5"
-                />
-                Continue with Facebook
-              </button> */}
-            </form>
-          )}
+                <button type="submit" className="mt-2 py-3 bg-yellow-500 text-slate-900 rounded-lg font-medium shadow-sm">Sign in</button>
+
+                <div className="flex items-center gap-3 text-sm text-slate-400 mt-3">
+                  <div className="h-px bg-slate-700 flex-1" />
+                  <span>or continue with</span>
+                  <div className="h-px bg-slate-700 flex-1" />
+                </div>
+
+                <div className="flex gap-3 mt-3">
+                  <button type="button" className="flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700">Google</button>
+                  <button type="button" className="flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700">GitHub</button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <label className="text-sm text-slate-300">Full name</label>
+                <input name="fullname" value={form.fullname} onChange={handleChange} required type="text" className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+
+                <label className="text-sm text-slate-300">Email</label>
+                <input name="email" value={form.email} onChange={handleChange} required type="email" className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+
+                <label className="text-sm text-slate-300">Password</label>
+                <input name="password" value={form.password} onChange={handleChange} required type="password" className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+
+                <div className="flex items-center gap-3 text-sm text-slate-400 mt-3">
+                  <div className="h-px bg-slate-700 flex-1" />
+                  <span>or continue with</span>
+                  <div className="h-px bg-slate-700 flex-1" />
+                </div>
+
+                <div className="flex gap-3 mt-3">
+                  <button type="button" className="flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700">Google</button>
+                  <button type="button" className="flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700">GitHub</button>
+                </div>
+
+                <button type="submit" className="mt-2 py-3 bg-yellow-500 text-slate-900 rounded-lg font-medium shadow-sm">Create account</button>
+              </form>
+            )}
+          </div>
         </div>
       </section>
     </div>

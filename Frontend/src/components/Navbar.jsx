@@ -1,29 +1,23 @@
-import React from "react";
-import { Link, NavLink} from "react-router-dom";
+import React, { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
 
 export default function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <nav className="sticky top-0 z-50 bg-white border-gray-200 dark:bg-gray-900 shadow-md">
-      <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        
-        {/* Logo */}
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 dark:bg-gray-900 shadow-md">
+      <div className="max-w-screen-xl mx-auto flex flex-wrap items-center justify-between px-4 py-3">
         <HashLink smooth to="/#home" className="flex items-center space-x-3 rtl:space-x-reverse">
-          <img
-            src="/VECTRA-LOGO.png"
-            className="h-9 rounded-full"
-            alt="Vectra Logo"
-          />
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            VECTRA
-          </span>
+          <img src="/VECTRA-LOGO.png" className="h-9 rounded-full" alt="Vectra Logo" />
+          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">VECTRA</span>
         </HashLink>
 
-        {/* User Menu */}
-        <div className="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+                {/* User Menu */}
+        <div className="flex items-center md:pl-30 md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
           <button
             type="button"
-            className="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+            className="flex text-sm  bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
             id="user-menu-button"
             aria-expanded="false"
             data-dropdown-toggle="user-dropdown"
@@ -86,113 +80,117 @@ export default function Navbar() {
               </li>
             </ul>
           </div>
+        </div>
 
-          {/* Mobile Menu Button */}
+
+        <div className="flex items-center gap-2 md:order-2">
           <button
-            data-collapse-toggle="navbar-user"
             type="button"
-            className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg 
-                       md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 
-                       dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 dark:focus:ring-gray-600 md:hidden"
             aria-controls="navbar-user"
-            aria-expanded="false"
+            aria-expanded={mobileOpen}
           >
-            <span className="sr-only">Open main menu</span>
-            <svg
-              className="w-5 h-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 17 14"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M1 1h15M1 7h15M1 13h15"
-              />
-            </svg>
+            <span className="sr-only">Toggle main menu</span>
+            {mobileOpen ? <span className="text-2xl leading-none">×</span> : (
+              <svg className="h-5 w-5" viewBox="0 0 17 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1h15M1 7h15M1 13h15" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+            )}
           </button>
         </div>
 
-        {/* Nav Links */}
-        <div
-          className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
-          id="navbar-user"
-        >
-          <ul className="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg 
-                         bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 
-                         md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
-          >
-            <li>
-              <NavLink to="/"
-                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
-                aria-current="page"
-              >
-                Home
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/cars"
-                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
-              >
-                Cars
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/bookings"
-                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
-              >
-                My Bookings
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/wishlist"
-                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
-              >
-                Wishlist
-              </NavLink>
-            </li>
-            <li>
-              <HashLink smooth to="/#about"
-                href="#about"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                About Us
-              </HashLink>
-            </li>
-            <li>
-              <HashLink smooth to="/#contact"
-                href="#contact"
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                           md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                           dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              >
-                Contact
-              </HashLink>
-            </li>
-            <li>
-              <NavLink to="/admin"
-                // className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent 
-                //            md:hover:text-yellow-300 md:p-0 dark:text-white md:dark:hover:text-yellow-300 
-                //            dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                className={({isActive})=>`block py-2 px-3 hover:text-yellow-300 ${isActive ? "text-yellow-500  " : "text-white "} md:p-0  rounded-sm`}
-              >
-                Admin
-              </NavLink>
-            </li>
-          </ul>
+        <div className={`w-full md:flex md:w-auto md:order-1 ${mobileOpen ? "block" : "hidden"}`} id="navbar-user">
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-slate-900 md:border-0 md:p-0 md:bg-transparent">
+            <ul className="flex flex-col gap-2 font-medium md:flex-row md:items-center md:gap-6">
+              <li>
+                <NavLink
+                  to="/"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-sm py-2 px-3 transition-colors hover:text-yellow-300 ${
+                      isActive ? "text-yellow-500" : "text-slate-900 dark:text-white"
+                    }`
+                  }
+                  aria-current="page"
+                >
+                  Home
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/cars"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-sm py-2 px-3 transition-colors hover:text-yellow-300 ${
+                      isActive ? "text-yellow-500" : "text-slate-900 dark:text-white"
+                    }`
+                  }
+                >
+                  Cars
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/bookings"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-sm py-2 px-3 transition-colors hover:text-yellow-300 ${
+                      isActive ? "text-yellow-500" : "text-slate-900 dark:text-white"
+                    }`
+                  }
+                >
+                  My Bookings
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/wishlist"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-sm py-2 px-3 transition-colors hover:text-yellow-300 ${
+                      isActive ? "text-yellow-500" : "text-slate-900 dark:text-white"
+                    }`
+                  }
+                >
+                  Wishlist
+                </NavLink>
+              </li>
+              <li>
+                <HashLink
+                  smooth
+                  to="/#about"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-sm py-2 px-3 text-slate-900 transition-colors hover:text-yellow-300 dark:text-white"
+                >
+                  About Us
+                </HashLink>
+              </li>
+              <li>
+                <HashLink
+                  smooth
+                  to="/#contact"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-sm py-2 px-3 text-slate-900 transition-colors hover:text-yellow-300 dark:text-white"
+                >
+                  Contact
+                </HashLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/admin"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-sm py-2 px-3 transition-colors hover:text-yellow-300 ${
+                      isActive ? "text-yellow-500" : "text-slate-900 dark:text-white"
+                    }`
+                  }
+                >
+                  Admin
+                </NavLink>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </nav>

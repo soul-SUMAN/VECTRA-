@@ -33,30 +33,30 @@ const cars = [
 
 export default function Cars() {
   return (
-    <div className=" w-full mx-auto min-h-150 px-16 py-12 bg-gray-50 dark:bg-gray-900">
-      <h2 className="text-4xl font-bold text-center text-orange-500 mb-10">
-        Available Cars
-      </h2>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {cars.map((car) => (
-          <div
-            key={car.id}
-            className="bg-white dark:bg-neutral-800 rounded-xl shadow-md overflow-hidden hover:scale-105 transition transform"
-          >
-            <img src={car.image} alt={car.name} className="w-full h-52 object-cover" />
-            <div className="p-5">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{car.name}</h3>
-              <p className="text-gray-500 dark:text-gray-300">{car.type}</p>
-              <p className="mt-2 text-lg font-bold text-yellow-500">{car.price}</p>
-              <button className="mt-4 w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg">
-                Book Now
-              </button>
-              <button className="mt-2 w-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-800 dark:text-white py-2 px-4 rounded-lg">
-                Add to Wishlist
-              </button>
+    <div className="w-full min-h-[calc(100vh-4rem)] bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="max-w-screen-xl mx-auto">
+        <h2 className="text-4xl font-bold text-center text-orange-500 mb-10">Available Cars</h2>
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {cars.map((car) => (
+            <div
+              key={car.id}
+              className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-800 shadow-lg transition duration-200 hover:scale-105"
+            >
+              <img src={car.image} alt={car.name} className="h-56 w-full object-cover" />
+              <div className="p-5">
+                <h3 className="text-xl font-semibold text-white">{car.name}</h3>
+                <p className="text-slate-300">{car.type}</p>
+                <p className="mt-2 text-lg font-bold text-yellow-500">{car.price}</p>
+                <button className="mt-4 w-full rounded-3xl bg-yellow-500 py-2 px-4 text-white transition hover:bg-yellow-600">
+                  Book Now
+                </button>
+                <button className="mt-2 w-full rounded-3xl bg-slate-700 py-2 px-4 text-white transition hover:bg-slate-600">
+                  Add to Wishlist
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
