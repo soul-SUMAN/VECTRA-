@@ -5,71 +5,68 @@ import { Bookings } from "../models/Booking.models.js";
 import { Cars } from "../models/Car.models.js";
 import { User } from "../models/User.models.js";
 
-const createBooking= asyncHandler(async(req,res)=>{
-
+const createBooking = asyncHandler(async (req, res) => {
     const {
         car,
         startDate,
         endDate,
         pickupLocation,
         dropLocation,
-        requiredDriver
+        requiredDriver,
+    } = req.body;
 
-    }= req.body;
-
-    if(!car || !startDate || !endDate){
-        throw new ApiError(400, "Required fields are missing")
+    if (!car || !startDate || !endDate) {
+        throw new ApiError(400, "Required fields are missing");
     }
 
-    const start= new Date(startDate);
-    const end= new Date(endDate);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-    if(start>= end){
-        throw new ApiError(400, "End date must be after start date")
+    if (isNaN(start) || isNaN(end)) {
+        throw new ApiError(400, "Invalid booking dates");
     }
 
-    const carData= await Cars.findById(Number(car));
-
-    if(!carData){
-        throw new ApiError(404, "Car not found")
+    if (start >= end) {
+        throw new ApiError(400, "End date must be after start date");
     }
 
-    // booking conflict check
-    const conflict= await Bookings.findOne({
-        car: car,
-        $or:[
+    const carData = await Cars.findById(car);
+
+    if (!carData) {
+        throw new ApiError(404, "Car not found");
+    }
+
+    const conflict = await Bookings.findOne({
+        car,
+        $or: [
             {
-                startDate: {$lte: end},
-                endDate:{$gte: start}
-            }
-        ]
-    })
+                startDate: { $lte: end },
+                endDate: { $gte: start },
+            },
+        ],
+    });
 
-    if(conflict){
-        throw new ApiError(400, "Car already booked for selected dates")
+    if (conflict) {
+        throw new ApiError(400, "Car already booked for selected dates");
     }
 
-    const totalDay=math.ceil(
-        (start-end)/(1000*60*60*24)
-    );
-    const totalPrice= totalDay * carData.pricePerDay
+    const totalDay = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const totalPrice = totalDay * carData.pricePerDay;
 
-    const booking= await Bookings.create({
+    const booking = await Bookings.create({
         user: req.user._id,
         car,
-        admin:carData.owner,
+        admin: carData.owner,
         startDate: start,
         endDate: end,
         requiredDriver: requiredDriver || false,
         pickupLocation,
         dropLocation,
         totalDay,
-        totalPrice
+        totalPrice,
     });
 
-    return res
-    .status(200)
-    .json(200, booking, "Car successfully booked");
+    return res.status(200).json(new ApiResponse(200, booking, "Car successfully booked"));
 });
 
 const getUserBooking= asyncHandler(async(req,res)=>{
@@ -114,30 +111,29 @@ const cancelBooking= asyncHandler(async(req,res)=>{
         throw new ApiError(403, "Not authorized");
     }
 
-    booking.status="Cancelled";
-    await booking,save({validateBeforeSave:false})
+    booking.status = "Cancelled";
+    await booking.save({ validateBeforeSave: false });
 
     return res
     .status(200)
-    .json(new ApiResponse(200, "Booking cancelled successfully"))
-
-})
+    .json(new ApiResponse(200, "Booking cancelled successfully"));
+});
 
 const updateBookingStatus= asyncHandler(async(req,res)=>{
-  if (req.user?.role != "Admin") {
+  if (req.user?.role !== "admin") {
         throw new ApiError(403, "You dont have the permission")
   }
 
   const { bookingId }= req.params;
   const { status }= req.body;
 
-  const booking= await Bookings.findByIdAndUpdate(
+  const booking= await Bookings.findOneAndUpdate(
     {
-        _id:bookingId,
-        owner:req.user._id
+        _id: bookingId,
+        admin: req.user._id,
     },
     {
-        $set: {status}
+        $set: { status }
     },
     {
         new: true
@@ -174,7 +170,7 @@ const getAllBookings= asyncHandler(async(req,res)=>{
 })
 
 const getAdminBookings= asyncHandler(async(req,res)=>{
-    if(req.user?.role != "Admin"){
+    if(req.user?.role !== "admin"){
         throw new ApiError(403, "Only for Admin")
     }
 

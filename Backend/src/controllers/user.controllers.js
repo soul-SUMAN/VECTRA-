@@ -65,18 +65,16 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(409 , "Username and Email already exist");
     }
 
-    //4. check avtar image
-    const avatarLocalPath= req.files?.avatar[0]?.path;
-    if(!avatarLocalPath){
-        throw new ApiError(400 , "Avatar file is required");
-    }
-    // console.log(avatarLocalPath)
+    //4. check avatar image (optional)
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
+    let avatarUrl = "";
 
-    //5. cloudinary upload
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-    if(!avatar){
-        throw new ApiError(400 , "Avatar upload failed");
+    if (avatarLocalPath) {
+        const avatar = await uploadOnCloudinary(avatarLocalPath);
+        if (!avatar?.url) {
+            throw new ApiError(400, "Avatar upload failed");
+        }
+        avatarUrl = avatar.url;
     }
     
     //6. create user object in db
@@ -85,7 +83,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         username: username.toLowerCase(),
         email,
         password,
-        avatar: avatar.url
+        avatar: avatarUrl
     });
 
     //7. Remove password & refreshToken

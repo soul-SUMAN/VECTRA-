@@ -17,7 +17,7 @@ const routes= Router();
 routes.route("/").get(getAllCars);
 
 // imprtant routes
-routes.route("/admin/my-cars").get(getMyCars);
+routes.route("/admin/my-cars").get(verifyJWT, getMyCars);
 
 routes.route("/:carId/availability").get(checkCarAvailabality);
 

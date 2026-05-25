@@ -381,15 +381,15 @@ const deleteCar= asyncHandler(async(req,res)=>{
     }
 
     const {carId}= req.params
-    const deleteCar= await Cars.findOneAndUpdate(
+    const deletedCar= await Cars.findOneAndDelete(
         {
             _id: carId,
             owner:req.user._id
         }
     );
 
-    if (!deleteCar) {
-        throw new ApiError(404, "car not found")
+    if (!deletedCar) {
+        throw new ApiError(404, "Car not found")
     }
     return res
     .status(200)

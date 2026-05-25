@@ -5,10 +5,10 @@ import { User } from "../models/User.models.js";
 import { Cars } from "../models/Car.models.js";
 
 const addedToWishlist= asyncHandler(async(req,res)=>{
-    const {catId}= req.body
+    const {carId}= req.body
 
     if(!carId){
-        throw new ApiError(400, "Sealect a car to wishlist")
+        throw new ApiError(400, "Select a car to wishlist")
     }
 
     const car= await Cars.findById(carId)
@@ -18,6 +18,8 @@ const addedToWishlist= asyncHandler(async(req,res)=>{
     }
 
     const user= await User.findById(req.user._id)
+
+    user.wishlist = user.wishlist || user.address?.wishlist || [];
 
     const alreadyExist= user.wishlist.some(
         (id)=>id.toString() === carId
@@ -48,10 +50,12 @@ const getWishlist= asyncHandler(async(req,res)=>{
         throw new ApiError(404, "User not found")
     }
 
+    const wishlist = user.wishlist || user.address?.wishlist || [];
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200, user.wishlist, "Wishlist fatched successfully")
+        new ApiResponse(200, wishlist, "Wishlist fetched successfully")
     );
 })
 
