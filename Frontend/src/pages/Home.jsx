@@ -1,353 +1,439 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { HashLink } from "react-router-hash-link";
+
+const STATS = [
+  { value: "500+", label: "Cars Available" },
+  { value: "1k+", label: "Happy Customers" },
+  { value: "50+", label: "Cities Covered" },
+  { value: "24/7", label: "Customer Support" },
+];
+
+const FEATURES = [
+  { icon: "🚗", title: "Wide Selection", desc: "From compact hatchbacks to luxury SUVs — find the exact car that fits your journey and budget." },
+  { icon: "⚡", title: "Instant Booking", desc: "Book in under 2 minutes. Choose your dates, pick your car, confirm — done." },
+  { icon: "🛡️", title: "Fully Insured", desc: "Every car on VECTRA is fully insured and verified so you drive with complete peace of mind." },
+  { icon: "🧑‍✈️", title: "Driver Option", desc: "Need a driver? Add one at checkout for ₹500/day and sit back and enjoy the ride." },
+  { icon: "📍", title: "Flexible Pickup", desc: "Pick up your car from any location that suits you. Drop-off flexibility included." },
+  { icon: "💰", title: "Best Prices", desc: "Transparent pricing with zero hidden charges. What you see is exactly what you pay." },
+];
+
+const HOW_IT_WORKS = [
+  { step: "01", title: "Search & Filter", desc: "Browse our fleet by body type, fuel, transmission, or price. Find your perfect match." },
+  { step: "02", title: "Book Instantly", desc: "Select pickup & drop-off dates, choose a driver if needed, and confirm your booking." },
+  { step: "03", title: "Pay Securely", desc: "Pay online, by card, or cash. All transactions are safe and fully transparent." },
+  { step: "04", title: "Drive & Enjoy", desc: "Pick up your car and hit the road. Our team is on standby 24/7 if you need help." },
+];
+
+const TESTIMONIALS = [
+  { name: "Arjun Sharma", location: "Kolkata", avatar: "AS", rating: 5, text: "Booked a sedan for a week-long trip. The process was effortless and the car was spotless. VECTRA is my go-to now." },
+  { name: "Priya Mehta", location: "Mumbai", avatar: "PM", rating: 5, text: "The driver add-on was a lifesaver on my business trip. Punctual, professional, and great value." },
+  { name: "Rahul Das", location: "Delhi", avatar: "RD", rating: 4, text: "Wide variety of cars, fair prices, and customer support actually responds. Highly recommend." },
+];
+
+const CAR_TYPES = [
+  { label: "SUV", icon: "🚙" },
+  { label: "Sedan", icon: "🚗" },
+  { label: "Luxury", icon: "💎" },
+  { label: "Hatchback", icon: "🚘" },
+  { label: "Electric", icon: "⚡" },
+  { label: "MUV", icon: "🚐" },
+];
+
+function StatCard({ value, label }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <span className="text-3xl sm:text-4xl font-extrabold text-yellow-400">{value}</span>
+      <span className="text-slate-400 text-sm">{label}</span>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, desc }) {
+  return (
+    <div className="group rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 transition hover:-translate-y-1 hover:border-yellow-500/40 hover:shadow-lg hover:shadow-yellow-500/10">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-500/10 text-3xl text-yellow-300">
+        {icon}
+      </div>
+      <h3 className="mt-5 text-lg font-semibold text-white">{title}</h3>
+      <p className="mt-3 text-sm text-slate-400 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+function StepCard({ step, title, desc, isLast }) {
+  return (
+    <div className="flex gap-5">
+      <div className="flex flex-col items-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500 text-slate-950 font-bold text-sm shadow-lg shadow-yellow-500/10">
+          {step}
+        </div>
+        {!isLast && <div className="mt-2 h-full w-px bg-slate-700" />}
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-2 text-slate-400 text-sm leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function TestimonialCard({ avatar, name, location, rating, text }) {
+  return (
+    <div className="rounded-3xl border border-slate-700/80 bg-slate-900/90 p-7 shadow-xl shadow-slate-950/20">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500/10 text-yellow-300 font-bold">{avatar}</div>
+        <div>
+          <p className="text-white font-semibold">{name}</p>
+          <p className="text-slate-500 text-sm">{location}</p>
+        </div>
+      </div>
+      <div className="flex gap-1 text-yellow-400 text-sm mb-4">
+        {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
+      </div>
+      <p className="text-slate-300 text-sm leading-relaxed">{text}</p>
+    </div>
+  );
+}
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [contactSent, setContactSent] = useState(false);
+  const today = new Date().toISOString().split("T")[0];
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (search) params.set("keyword", search);
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+    navigate(`/cars?${params.toString()}`);
+  };
+
+  const handleContactChange = (e) => {
+    const { name, value } = e.target;
+    setContactForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    setContactSent(true);
+    setContactForm({ name: "", email: "", message: "" });
+    setTimeout(() => setContactSent(false), 4000);
+  };
+
   return (
-    <>
+    <div className="bg-slate-950 text-white">
+      <section
+        id="home"
+        className="relative min-h-[90vh] overflow-hidden"
+        style={{
+          backgroundImage: "url('/cars.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-950/80" />
+        <div className="relative z-10 mx-auto max-w-screen-xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="max-w-3xl text-center mx-auto">
+            <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-300">
+              🚀 India's Fastest Growing Car Rental Platform
+            </span>
+            <h1 className="mt-8 text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl text-white">
+              Drive Your
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                Journey.
+              </span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+              Rent the car you love — when you need it, where you need it. <span className="text-yellow-400 font-semibold">Zero hassle.</span>
+            </p>
 
-    {/* home section */}
-        <div> 
-            <div id="home" className="relative "
-            style={
-                {backgroundImage: "url('/cars.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                height: '75vh',
-                }
-                  }>
-            <div className="absolute inset-0 backdrop-blur-xl bg-black/10 z-0"></div>
-            <div className="relative z-10 max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-22">
-                    
-            <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center ">
-                <h1 className="text-4xl sm:text-6xl font-bold text-gray-800  
-                            dark:text-orange-500 text-shadow-yellow-500 ">
-                    Drive Your Journey
-                </h1>
+            <form onSubmit={handleSearch} className="mt-12 rounded-3xl border border-slate-700/80 bg-slate-900/90 p-4 shadow-2xl shadow-slate-950/40 backdrop-blur">
+              <div className="grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr_auto]">
+                <label className="sr-only" htmlFor="home-search">Search cars</label>
+                <input
+                  id="home-search"
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by car name or brand"
+                  className="min-w-0 rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
 
-                <p className="mt-3 text-gray-600 dark:text-amber-300 text-lg 
-                                    sm:text-md font-medium text-shadow-black">
-                Rent the car you love. When you need it, where you need it.
-                </p>
+                <input
+                  type="date"
+                  value={startDate}
+                  min={today}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
 
-                <div className="mt-7 sm:mt-12 mx-auto max-w-xl relative">
-                    {/* Form */}
-                    <form>
-                    <div className="relative z-10 flex gap-x-3 p-3 bg-white border border-gray-200 rounded-lg 
-                                    shadow-lg shadow-gray-100 dark:bg-neutral-900 dark:border-neutral-700 
-                                    dark:shadow-gray-900/20">
-                        <div className="w-full">
-                        <label htmlFor="hs-search-article-1" className="block text-sm text-gray-700 font-medium dark:text-white">
-                          <span className="sr-only">Search cars</span>
-                        </label>
-                        <input 
-                          type="text" 
-                          name="hs-search-article-1" 
-                          id="hs-search-article-1" 
-                          className="py-2.5 px-4 block w-full border-transparent 
-                                    rounded-lg focus:border-yellow-500 focus:ring-yellow-500
-                                    dark:bg-neutral-900 dark:border-transparent dark:text-neutral-400
-                                    dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
-                          placeholder="Search car..." />
-                        </div>
-                        <div>
-                        <a className="size-11 inline-flex justify-center items-center 
-                                      gap-x-2 text-sm font-medium rounded-lg border border-transparent
-                                      bg-yellow-500 text-white hover:bg-yellow-600 focus:outline-none 
-                                      focus:bg-yellow-600 disabled:opacity-50 disabled:pointer-events-none" 
-                            href="#">
-                            <svg  className="shrink-0 size-5" 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  width="24" height="24" viewBox="0 0 24 24" 
-                                  fill="none" stroke="currentColor" 
-                                  strokeWidth="2" strokeLinecap="round" 
-                                  strokeLinejoin="round">
-                                  <circle cx="11" cy="11" r="8"/>
-                                  <path d="m21 21-4.3-4.3"/>
-                            </svg>
-                        </a>
-                        </div>
-                        
-                    </div>
-                        <div
-                            id="date-range-picker"
-                            date-rangepicker="true"
-                            className="flex flex-wrap items-center gap-3 mt-3 justify-center"
-                          >
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg
-                                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4Z M0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Z M5 10h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-                                </svg>
-                              </div>
-                              <input
-                                id="datepicker-range-start"
-                                name="end"
-                                type="text"
-                                placeholder="Pickup date"
-                                className="w-full sm:w-auto pl-10 py-2.5 px-4 flex-1 border border-gray-300 rounded-lg shadow-sm 
-                                          focus:ring-yellow-500 focus:border-yellow-500 
-                                          dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
-                              />
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate || today}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
 
-                            </div>
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-yellow-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-400"
+                >
+                  Search Cars
+                </button>
+              </div>
+            </form>
 
-                            <span className=" flex sm:flex justify-center items-center h-full text-gray-500">to</span>
-
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg
-                                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4Z M0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Z M5 10h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-                                </svg>
-                              </div>
-                              <input
-                                id="datepicker-range-end"
-                                name="start"
-                                type="text"
-                                placeholder="Drop-off date"
-                                className="w-full sm:w-auto pl-10 py-2.5 px-4 flex-1 border border-gray-300 rounded-lg shadow-sm 
-                                          focus:ring-yellow-500 focus:border-yellow-500 
-                                          dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
-                              />
-
-                            </div>
-                          </div>
-
-                    </form>
-                    {/* End Form */}
-
-                    {/* SVG Element */}
-                    <div className="hidden md:block absolute top-0 end-0 -translate-y-12 translate-x-20">
-                    <svg className="w-16  h-auto text-orange-500" width="121" height="135" viewBox="0 0 121 135" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 16.4754C11.7688 27.4499 21.2452 57.3224 5 89.0164" stroke="currentColor" strokeWidth="10" strokeLinecap="round"/>
-                        <path d="M33.6761 112.104C44.6984 98.1239 74.2618 57.6776 83.4821 5" stroke="currentColor" strokeWidth="10" strokeLinecap="round"/>
-                        <path d="M50.5525 130C68.2064 127.495 110.731 117.541 116 78.0874" stroke="currentColor" strokeWidth="10" strokeLinecap="round"/>
-                    </svg>
-                    </div>
-                    {/* End SVG Element */}
-
-                    {/* SVG Element */}
-                    <div className="hidden mb-16 md:block absolute bottom-0 start-0 translate-y-10 -translate-x-32">
-                    <svg className="w-40 h-auto text-cyan-500" width="347" height="188" viewBox="0 0 347 188" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 82.4591C54.7956 92.8751 30.9771 162.782 68.2065 181.385C112.642 203.59 127.943 78.57 122.161 25.5053C120.504 2.2376 93.4028 -8.11128 89.7468 25.5053C85.8633 61.2125 130.186 199.678 180.982 146.248L214.898 107.02C224.322 95.4118 242.9 79.2851 258.6 107.02C274.299 134.754 299.315 125.589 309.861 117.539L343 93.4426" stroke="currentColor" strokeWidth="7" strokeLinecap="round"/>
-                    </svg>
-                    </div>
-                    {/* End SVG Element */}
-                </div>
-                <div className="mt-5 sm:mt-10">
-
-                   
-                      
-                          {/* Stats / Highlights */}
-                    <div className="w-full flex justify-center sm:gap-15 gap-5 text-shadow-orange-400">
-                      <div className="flex-col">
-                        <h3 className="text-gray-900 dark:text-white text-3xl font-bold">500+</h3>
-                        <h6 className="text-gray-500 dark:text-gray-400 text-sm">Available Cars</h6>
-                      </div>
-                      <div className="flex-col">
-                        <h4 className="text-gray-900 dark:text-white text-3xl font-bold">1k+</h4>
-                        <h6 className="text-gray-500 dark:text-gray-400 text-sm">Happy Customers</h6>
-                      </div>
-                      <div className="flex-col">
-                        <h4 className="text-gray-900 dark:text-white text-3xl font-bold">24/7</h4>
-                        <h6 className="text-gray-500 dark:text-gray-400 text-sm">Customer Support</h6>
-                      </div>
-                    </div>
-                  
-
-                </div>
-                </div>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <Link to="/cars" className="rounded-2xl bg-yellow-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-400">
+                Browse All Cars
+              </Link>
+              <HashLink smooth to="#about" className="rounded-2xl border border-slate-700 px-6 py-3 text-sm text-slate-300 transition hover:border-yellow-500/60 hover:text-white">
+                Learn More
+              </HashLink>
             </div>
+
+            <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {STATS.map((stat) => (
+                <StatCard key={stat.label} {...stat} />
+              ))}
             </div>
-            
-            </div>
+          </div>
         </div>
+      </section>
 
-    {/* about section */}
-
-    <section id="about" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
-      <div className="w-full max-w-7xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12 items-center">
-        
-        {/* LEFT SIDE → Car Image */}
-        <div className="flex justify-center">
-          <img
-            src="/car-togather.png"
-            alt="About Vectra"
-            className="rounded-xl object-cover shadow-xl max-h-[400px]"
-          />
+      <section className="bg-slate-900 py-16 border-y border-slate-800">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-sm font-semibold uppercase tracking-[0.3em] text-slate-500 mb-10">Browse by type</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {CAR_TYPES.map((type) => (
+              <Link
+                key={type.label}
+                to={`/cars?bodyType=${encodeURIComponent(type.label)}`}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/90 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-yellow-500/50 hover:bg-yellow-500/10 hover:text-yellow-300"
+              >
+                <span className="text-lg">{type.icon}</span>
+                {type.label}
+              </Link>
+            ))}
+          </div>
         </div>
+      </section>
 
-        {/* RIGHT SIDE → About Content */}
-        <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
-          <h2 className="text-4xl sm:text-5xl font-bold text-orange-500 dark:text-orange-400">
-            About VECTRA
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
-            At <span className="font-semibold">VECTRA</span>, we believe renting a car should be
-            simple, affordable, and stress-free. Our platform brings together
-            a wide range of cars — from luxury sedans to budget-friendly compacts —
-            ensuring that you always find the perfect ride for every journey.
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-            Powered by modern AI features, VECTRA helps you get personalized car
-            recommendations, predicts rental demand, and even assists with smart
-            pricing — so both customers and providers benefit.
-          </p>
+      <section className="bg-slate-950 py-24">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-yellow-400">Why VECTRA</p>
+            <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Everything you need for a stress-free rental.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-400 text-lg leading-8">
+              Book the right car, manage your rental, and get support whenever you need it.
+            </p>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <FeatureCard key={feature.title} {...feature} />
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* Stats */}
-          <div className="flex gap-10 mt-4">
-            <div>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white">500+</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Cars Available</p>
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white">1k+</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Satisfied Users</p>
+      <section className="bg-slate-900 py-24">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 grid gap-16 lg:grid-cols-2 items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-yellow-400">How it works</p>
+            <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Book your ride in four simple steps.</h2>
+            <p className="mt-5 text-slate-400 text-lg leading-8">
+              Start with a search, choose your vehicle, confirm your booking, and enjoy the ride.
+            </p>
+            <div className="mt-12 space-y-8">
+              {HOW_IT_WORKS.map((step, index) => (
+                <StepCard key={step.step} {...step} isLast={index === HOW_IT_WORKS.length - 1} />
+              ))}
             </div>
           </div>
 
-          {/* Read More */}
-          <button className="mt-6 sm:w-fit w-full px-6 py-3 bg-yellow-500 hover:bg-yellow-600 transition-all duration-300 rounded-lg text-white font-medium">
-            Read More
-          </button>
-        </div>
-      </div>
-    </section>
-
-    {/* contact section */}
-
-    <section id= "contact" className="py-24 relative bg-gray-50 dark:bg-neutral-900">
-      <div className="w-full max-w-6xl px-4 md:px-6 lg:px-8 mx-auto grid lg:grid-cols-2 gap-12">
-        
-        {/* LEFT SIDE → Info */}
-        <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
-          <h2 className="text-4xl sm:text-5xl font-bold text-orange-500 dark:text-orange-400">
-            Get in Touch
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
-            Have a question, feedback, or need support?  
-            Our team is here <span className="font-semibold">24/7</span> to assist you.  
-            Reach out to us and we’ll get back to you quickly.
-          </p>
-
-          <div className="mt-6 space-y-4 ">
-            <p className="flex items-center text-gray-700 dark:text-gray-300">
-              📍 <span className="ml-2">123 Car Street, Kolkata, India</span>
-            </p>
-            <p className="flex items-center text-gray-700 dark:text-gray-300">
-              📞 <span className="ml-2">+91 98765 43210</span>
-            </p>
-            <p className="flex items-center text-gray-700 dark:text-gray-300">
-              📧 <span className="ml-2">support@vectra.com</span>
-            </p>
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-3xl bg-yellow-500/10 blur-3xl" />
+            <img
+              src="/car-togather.png"
+              alt="VECTRA fleet"
+              className="relative rounded-[2rem] object-cover shadow-2xl border border-slate-700 w-full max-h-[520px]"
+            />
+            <div className="absolute -bottom-5 left-5 rounded-3xl border border-slate-700 bg-slate-950/95 px-5 py-4 shadow-xl">
+              <p className="text-2xl font-bold text-yellow-400">₹699</p>
+              <p className="text-sm text-slate-400">Starting per day</p>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* RIGHT SIDE → Contact Form */}
-        <div className="bg-white dark:bg-neutral-800 shadow-lg rounded-xl p-8">
-          <form className="space-y-5">
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                placeholder="Your name"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
+      <section className="bg-slate-950 py-24">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-yellow-400">Testimonials</p>
+            <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">What our customers say</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-400 text-lg leading-8">
+              Real reviews from people who rented with VECTRA.
+            </p>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {TESTIMONIALS.map((testimonial) => (
+              <TestimonialCard key={testimonial.name} {...testimonial} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="about" className="bg-slate-900 py-24">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 grid gap-16 lg:grid-cols-2 items-center">
+          <div className="order-2 lg:order-1">
+            <div className="relative">
+              <div className="absolute -inset-4 rounded-[2rem] bg-orange-500/10 blur-3xl" />
+              <img
+                src="/car-togather.png"
+                alt="About VECTRA"
+                className="relative rounded-[2rem] object-cover shadow-2xl border border-slate-700 w-full max-h-[520px]"
               />
             </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                placeholder="Your email"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
-                Message
-              </label>
-              <textarea
-                placeholder="Write your message..."
-                rows="4"
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
-              ></textarea>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-yellow-500 hover:bg-yellow-600 transition-all duration-300 rounded-lg text-white font-medium"
-            >
-              Send Message
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    {/* faq section */}
-{/*     
-    <section id= "faq" className="py-24 px-4   relative">
-
-        <div id="accordion-color" data-accordion="collapse" class="rounded-base rounded-2xl border border-default overflow-hidden shadow-xs">
-          <h2 id="accordion-color-heading-1">
-            <button type="button" class="flex items-center hover:bg-amber-600 justify-between w-full p-5 font-medium rtl:text-right text-body rounded-t-base border border-t-0 border-x-0 border-b-default hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-1" aria-expanded="true" aria-controls="accordion-color-body-1">
-              <span>What is Flowbite?</span>
-              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
-            </button>
-          </h2>
-          <div id="accordion-color-body-1" class="hidden border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-color-heading-1">
-            <div class="p-4 md:p-5">
-              <p class="mb-2 text-body">Flowbite is an open-source library of interactive components built on top of Tailwind CSS including buttons, dropdowns, modals, navbars, and more.</p>
-              <p class="text-body">Check out this guide to learn how to <a href="/docs/getting-started/introduction/" class="text-fg-brand hover:underline">get started</a> and start developing websites even faster with components on top of Tailwind CSS.</p>
-            </div>
           </div>
-          <h2 id="accordion-color-heading-2">
-            <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body border border-x-0 border-b-default border-t-0 hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-2" aria-expanded="false" aria-controls="accordion-color-body-2">
-              <span>Is there a Figma file available?</span>
-              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
-            </button>
-          </h2>
-          <div id="accordion-color-body-2" class="hidden border border-s-0 border-e-0 border-t-0 border-b-default" aria-labelledby="accordion-color-heading-2">
-            <div class="p-4 md:p-5">
-              <p class="mb-2 text-body">Flowbite is first conceptualized and designed using the Figma software so everything you see in the library has a design equivalent in our Figma file.</p>
-              <p class="text-body">Check out the <a href="https://flowbite.com/figma/" class="text-fg-brand hover:underline">Figma design system</a> based on the utility classes from Tailwind CSS and components from Flowbite.</p>
+          <div className="order-1 lg:order-2 space-y-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-300">
+              🏢 About Us
+            </span>
+            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Built for <span className="text-orange-500">Indian Roads</span> ;& Drivers</h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              At <span className="font-semibold text-white">VECTRA</span>, we believe renting a car should be simple, affordable, and stress-free.
+            </p>
+            <p className="text-slate-500 leading-relaxed">
+              Our platform brings together a wide range of cars, personalized recommendations, transparent pricing, and end-to-end booking management.
+            </p>
+            <div className="flex flex-wrap gap-10 pt-4">
+              <div>
+                <p className="text-3xl font-extrabold text-yellow-400">500+</p>
+                <p className="text-slate-400 text-sm">Cars Available</p>
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-yellow-400">1k+</p>
+                <p className="text-slate-400 text-sm">Satisfied Users</p>
+              </div>
             </div>
-          </div>
-          <h2 id="accordion-color-heading-3">
-            <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-body hover:text-fg-brand hover:bg-brand-softer gap-3" data-accordion-target="#accordion-color-body-3" aria-expanded="false" aria-controls="accordion-color-body-3">
-              <span>What are the differences between Flowbite and Tailwind UI?</span>
-              <svg data-accordion-icon class="w-5 h-5 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7"/></svg>
-            </button>
-          </h2>
-          <div id="accordion-color-body-3" class="hidden" aria-labelledby="accordion-color-heading-3">
-            <div class="p-4 md:p-5 border border-t-default border-b-0 border-x-0">
-              <p class="mb-2 text-body">The main difference is that the core components from Flowbite are open source under the MIT license, whereas Tailwind UI is a paid product. Another difference is that Flowbite relies on smaller and standalone components, whereas Tailwind UI offers sections of pages.</p>
-              <p class="mb-2 text-body">However, we actually recommend using both Flowbite, Flowbite Pro, and even Tailwind UI as there is no technical reason stopping you from using the best of two worlds.</p>
-              <p class="mb-2 text-body">Learn more about these technologies:</p>
-              <ul class="ps-5 text-body list-disc">
-                <li><a href="https://flowbite.com/pro/" class="text-fg-brand hover:underline">Flowbite Pro</a></li>
-                <li><a href="https://tailwindui.com/" rel="nofollow" class="text-fg-brand hover:underline">Tailwind UI</a></li>
-              </ul>
+            <div className="flex flex-wrap gap-3 pt-6">
+              <Link to="/cars" className="rounded-2xl bg-yellow-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-400">
+                Explore Our Fleet
+              </Link>
+              <HashLink smooth to="#contact" className="rounded-2xl border border-slate-700 px-6 py-3 text-sm text-slate-300 transition hover:border-yellow-500/60 hover:text-white">
+                Contact Us
+              </HashLink>
             </div>
           </div>
         </div>
-    </section> */}
+      </section>
 
-    </>
-  )
+      <section className="bg-gradient-to-r from-yellow-500 to-orange-500 py-20">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">Ready to hit the road?</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-900 text-lg leading-8">
+            Join 1000+ happy customers who trust VECTRA for their every journey.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link to="/cars" className="rounded-2xl bg-slate-950 px-8 py-3 text-lg font-semibold text-yellow-400 transition hover:bg-slate-900">
+              Book a Car Now
+            </Link>
+            <Link to="/login" className="rounded-2xl border-2 border-slate-950 bg-transparent px-8 py-3 text-lg font-semibold text-slate-950 transition hover:bg-slate-950/10">
+              Create Free Account
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="bg-slate-900 py-24">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 grid gap-16 lg:grid-cols-2 items-start">
+          <div className="space-y-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-300">
+              📬 Contact
+            </span>
+            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Get in <span className="text-orange-500">Touch</span></h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              Have a question, feedback, or need support? Our team is available <span className="text-white font-semibold">24/7</span> to help you.
+            </p>
+            <div className="space-y-4">
+              <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-5">
+                <p className="text-slate-500 text-sm">Address</p>
+                <p className="mt-2 text-white">123 Car Street, Kolkata, West Bengal</p>
+              </div>
+              <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-5">
+                <p className="text-slate-500 text-sm">Phone</p>
+                <p className="mt-2 text-white">+91 98765 43210</p>
+              </div>
+              <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-5">
+                <p className="text-slate-500 text-sm">Email</p>
+                <p className="mt-2 text-white">support@vectra.com</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-slate-800 bg-slate-950/95 p-8 shadow-2xl shadow-slate-950/30">
+            <h3 className="text-xl font-semibold text-white">Send us a message</h3>
+            {contactSent && (
+              <div className="mt-5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-300">
+                Message sent! We'll get back to you shortly.
+              </div>
+            )}
+            <form onSubmit={handleContactSubmit} className="mt-8 space-y-5">
+              <div>
+                <label htmlFor="contact-name" className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                <input
+                  id="contact-name"
+                  name="name"
+                  value={contactForm.name}
+                  onChange={handleContactChange}
+                  required
+                  placeholder="Your full name"
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
+              </div>
+              <div>
+                <label htmlFor="contact-email" className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                <input
+                  id="contact-email"
+                  name="email"
+                  type="email"
+                  value={contactForm.email}
+                  onChange={handleContactChange}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
+              </div>
+              <div>
+                <label htmlFor="contact-message" className="block text-sm font-medium text-slate-300 mb-2">Message</label>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  value={contactForm.message}
+                  onChange={handleContactChange}
+                  required
+                  rows="5"
+                  placeholder="Write your message here..."
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                />
+              </div>
+              <button type="submit" className="w-full rounded-2xl bg-yellow-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-400">
+                Send Message
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+     
+    </div>
+  );
 }
