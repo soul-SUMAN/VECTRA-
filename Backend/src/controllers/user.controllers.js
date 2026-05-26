@@ -153,15 +153,18 @@ const loginUser= asyncHandler(async(req,res)=>{
     )
 
     //7. Send response in cookie
-    const option={
-        httpOnly:true,
-        secure:true
-    }
+    // ✅ AFTER — sameSite matches secure setting
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    };
+
     console.log("email: ", email , "\npassword:" , password , "\nusername:" , username);
     return res
             .status(200)
-            .cookie("accessToken", accessToken, option)
-            .cookie("refreshToken", refreshToken, option)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
             .json(
                 new ApiResponse(
                     200,
@@ -189,15 +192,17 @@ const logoutUser= asyncHandler(async(req,res)=>{
         }
     )
 
-    const option={
-        httpOnly:true,
-        secure:true
-    }
+        // ✅ AFTER — sameSite matches secure setting
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    };
 
     return res
     .status(200)
-    .clearCookie("accessToken", option)
-    .clearCookie("refreshToken", option)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .json(
         new ApiResponse(200, {}, "User logged Out")
     )
@@ -223,17 +228,19 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
          throw new ApiError(401, "Refreshtoken is expired or used")
      }
  
-     const {accessToken, newRefreshToken}=await generateRefreshAndAccessToken(user._id)
+     const {accessToken, refreshToken: newRefreshToken}=await generateRefreshAndAccessToken(user._id)
  
-     const option = {
-         httpOnly: true,
-         secure: true
-     }
+     // ✅ AFTER — sameSite matches secure setting
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    };
  
      return res
      .status(200)
-     .cookie("accessToken", accessToken, option)
-     .cookie("refreshToken", newRefreshToken, option)
+     .cookie("accessToken", accessToken, cookieOptions)
+     .cookie("refreshToken", newRefreshToken, cookieOptions)
      .json(
          new ApiResponse(
              200,
