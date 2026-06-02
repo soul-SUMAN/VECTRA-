@@ -171,7 +171,7 @@ export default function Home() {
                   value={startDate}
                   min={today}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 [color-scheme:dark] focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
                 />
 
                 <input
@@ -179,7 +179,7 @@ export default function Home() {
                   value={endDate}
                   min={startDate || today}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                  className="rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-400 [color-scheme:dark] focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
                 />
 
                 <button
