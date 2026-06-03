@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
+    "@react-oauth/google": "^0.13.5",
     "@tailgrids/icons": "^2.0.0",
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.16.0",
