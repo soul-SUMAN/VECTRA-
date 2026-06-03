@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createBooking } from "../api/bookingService";
 import { useAuth } from "../context/AuthContext";
 import Toast from "./Toast";
+import { createRazorpayOrder, verifyRazorpayPayment } from "../api/paymentService";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const today = () => new Date().toISOString().split("T")[0];
@@ -34,7 +35,7 @@ function InfoRow({ icon, label, value }) {
 
 // ─── Main Modal ─────────────────────────────────────────────────────────────
 export default function BookingModal({ car, onClose }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [form, setForm] = useState({
     startDate: "",
@@ -77,45 +78,119 @@ export default function BookingModal({ car, onClose }) {
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ─── Load Razorpay script dynamically ─────────────────────────────────────────
+const loadRazorpay = () =>
+  new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload  = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
-    if (!isAuthenticated) {
-      setToast({ message: "Please login to book a car", type: "error" });
-      return;
-    }
-    if (days <= 0) {
-      setToast({ message: "Drop-off date must be after pickup date", type: "error" });
-      return;
-    }
-    if (!form.pickupLocation.trim()) {
-      setToast({ message: "Please enter a pickup location", type: "error" });
-      return;
-    }
+// ─── Replace handleSubmit entirely ────────────────────────────────────────────
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setSubmitting(true);
-    try {
-      await createBooking({
-        car: car._id,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        numberOfCars: Number(form.numberOfCars),
-        driverRequired: form.driverRequired,
-        pickupLocation: form.pickupLocation,
-        totalDay: days,
-        totalPrice: grandTotal,
-        paymentMethod: form.paymentMethod,
-      });
+  if (!isAuthenticated) {
+    setToast({ message: "Please login to book a car", type: "error" });
+    return;
+  }
+  if (days <= 0) {
+    setToast({ message: "Drop-off date must be after pickup date", type: "error" });
+    return;
+  }
+  if (!form.pickupLocation.trim()) {
+    setToast({ message: "Please enter a pickup location", type: "error" });
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    // Step 1: Create booking in DB
+    const bookingRes = await createBooking({
+      car:            car._id,
+      startDate:      form.startDate,
+      endDate:        form.endDate,
+      numberOfCars:   Number(form.numberOfCars),
+      driverRequired: form.driverRequired,
+      pickupLocation: form.pickupLocation,
+      totalDay:       days,
+      totalPrice:     grandTotal,
+      paymentMethod:  form.paymentMethod,
+    });
+
+    const bookingId = bookingRes.data.data._id;
+
+    // Step 2: If Cash — done (no Razorpay needed)
+    if (form.paymentMethod === "Cash") {
       setBooked(true);
-    } catch (err) {
-      setToast({
-        message: err.response?.data?.message || "Booking failed. Please try again.",
-        type: "error",
-      });
-    } finally {
       setSubmitting(false);
+      return;
     }
-  };
+
+    // Step 3: Create Razorpay order
+    const orderRes = await createRazorpayOrder(bookingId);
+    const { orderId, amount, currency, keyId } = orderRes.data.data;
+
+    // Step 4: Load Razorpay script
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      setToast({ message: "Payment gateway failed to load. Try again.", type: "error" });
+      setSubmitting(false);
+      return;
+    }
+
+    // Step 5: Open Razorpay checkout popup
+    const options = {
+      key:      keyId,
+      amount,
+      currency,
+      name:     "VECTRA",
+      description: `${car.name} — ${days} day${days !== 1 ? "s" : ""}`,
+      image:    "/VECTRA-LOGO.png",
+      order_id: orderId,
+      theme:    { color: "#f59e0b" },
+      prefill: {
+        name:  user?.fullname,
+        email: user?.email,
+      },
+      handler: async (response) => {
+        // Step 6: Verify payment on backend
+        try {
+          await verifyRazorpayPayment({
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
+            bookingId,
+          });
+          setBooked(true);
+        } catch {
+          setToast({ message: "Payment verification failed. Contact support.", type: "error" });
+        }
+        setSubmitting(false);
+      },
+      modal: {
+        ondismiss: () => {
+          setToast({ message: "Payment cancelled", type: "info" });
+          setSubmitting(false);
+        },
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+
+  } catch (err) {
+    setToast({
+      message: err.response?.data?.message || "Something went wrong. Try again.",
+      type: "error",
+    });
+    setSubmitting(false);
+  }
+};
 
   const inputClass =
     "w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 " +
