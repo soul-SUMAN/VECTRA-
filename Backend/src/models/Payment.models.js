@@ -11,11 +11,19 @@ const paymentSchema=new mongoose.Schema(
             ref: "Bookings"
         },
         amount:Number,
-        transactionId:String,
+        
+        razorpayOrderId:   String,
+        razorpayPaymentId: String,
+        razorpaySignature: String,
+        paymentMethod: {
+            type: String,
+            enum: ["Online", "Cash", "Card"],
+            default: "Online",
+        },
         paymentStatus:{
             type:String,
             enum:["Pending","Success","Failed"],
-            default:Pending
+            default:"Pending"
         }
 
     },
