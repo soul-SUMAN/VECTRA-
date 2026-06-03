@@ -24,6 +24,9 @@ app.use(cors({
   },
   credentials: true
 }));
+
+app.use(passport.initialize());
+
 // configuration part
 
 // limit the json input for security purpases (configurin the file upload) specificaly for **form data
@@ -43,6 +46,9 @@ import carRouter from "./routers/car.routes.js";
 import bookingsRouter from "./routers/booking.routes.js";
 import wishlistRouter from "./routers/wishlist.routes.js";
 import dashboardRouter from "./routers/dashboard.routes.js";
+import passport from "./utils/passport.js";
+import paymentRouter from "./routers/payment.routes.js";
+import otpRouter from "./routers/otp.routes.js";
 
 
 
@@ -52,6 +58,9 @@ app.use("/api/v1/cars", carRouter);
 app.use("/api/v1/bookings", bookingsRouter);
 app.use("/api/v1/wishlist", wishlistRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+
+app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/otp", otpRouter);
 
 
 export { app };

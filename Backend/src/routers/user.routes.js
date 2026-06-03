@@ -6,10 +6,12 @@ import {    registerUser,
             changePassword, 
             getCurrentUser, 
             updateUserDetails, 
-            updateUserAvatar 
+            updateUserAvatar ,
+            googleAuthCallback
         } from "../controllers/user.controllers.js";
 import { upload } from "../middleware/multer.middleware.js"
 import { verifyJWT } from "../middleware/auth.middleware.js";
+import passport from "../utils/passport.js";
 
 const routes= Router();
 
@@ -39,6 +41,18 @@ routes.route("/update-avatar").patch(
 );
 
 routes.route("/change-password").post(verifyJWT, changePassword);
+
+// Google OAuth routes
+routes.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+routes.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login` }),
+  googleAuthCallback
+);
 
 
 export default routes;
