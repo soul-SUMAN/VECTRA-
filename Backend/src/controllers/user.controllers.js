@@ -5,6 +5,7 @@ import { User } from "../models/User.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import { sendWelcomeEmail } from "../utils/mailer.js";
 
 // token generation method
 const generateRefreshAndAccessToken = async (userId)=>{
@@ -86,6 +87,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         avatar: avatarUrl
     });
 
+
     //7. Remove password & refreshToken
     const createdUser= await User.findById(user._id).select(
         "-password -refreshToken"
@@ -95,6 +97,9 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(500 , "Something went wrong while registering user")
     }
     
+    // Send welcome email (non-blocking)
+    await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
+
     console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
 
     //8. Return response
@@ -370,4 +375,25 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
         )
     )
 })
-export {registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser, updateUserDetails, updateUserAvatar}
+
+// ─── Google OAuth callback handler ────────────────────────────────────────────
+const googleAuthCallback = asyncHandler(async (req, res) => {
+  // req.user is set by passport after Google verification
+  const user = req.user;
+
+  const { accessToken, refreshToken } = await generateRefreshAndAccessToken(user._id);
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure:   process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  };
+
+  res
+    .cookie("accessToken",  accessToken,  cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .redirect(`${process.env.FRONTEND_URL}/`); // redirect to home after Google login
+});
+
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser, updateUserDetails, updateUserAvatar, googleAuthCallback}
