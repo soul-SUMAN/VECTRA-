@@ -41,8 +41,9 @@ export default function BookingModal({ car, onClose }) {
     startDate: "",
     endDate: "",
     numberOfCars: 1,
-    driverRequired: false,
+    requiredDriver: false,
     pickupLocation: "",
+    dropLocation: "",
     paymentMethod: "Online",
   });
 
@@ -70,7 +71,7 @@ export default function BookingModal({ car, onClose }) {
   // ── Derived totals ────────────────────────────────────────────────────────
   const days = daysBetween(form.startDate, form.endDate);
   const carTotal = days * car.pricePerDay * form.numberOfCars;
-  const driverTotal = form.driverRequired ? days * DRIVER_CHARGE_PER_DAY * form.numberOfCars : 0;
+  const driverTotal = form.requiredDriver ? days * DRIVER_CHARGE_PER_DAY * form.numberOfCars : 0;
   const grandTotal = carTotal + driverTotal;
 
   const handleChange = (e) => {
@@ -109,33 +110,34 @@ const handleSubmit = async (e) => {
   setSubmitting(true);
 
   try {
-    // Step 1: Create booking in DB
-    const bookingRes = await createBooking({
-      car:            car._id,
-      startDate:      form.startDate,
-      endDate:        form.endDate,
-      numberOfCars:   Number(form.numberOfCars),
-      driverRequired: form.driverRequired,
-      pickupLocation: form.pickupLocation,
-      totalDay:       days,
-      totalPrice:     grandTotal,
-      paymentMethod:  form.paymentMethod,
-    });
-
-    const bookingId = bookingRes.data.data._id;
-
-    // Step 2: If Cash — done (no Razorpay needed)
+    // ─── CASE A: CASH ON DELIVERY (NO RAZORPAY NEEDED) ───────────────────────
     if (form.paymentMethod === "Cash") {
+      await createBooking({
+        car:            car._id,
+        startDate:      form.startDate,
+        endDate:        form.endDate,
+        requiredDriver: form.requiredDriver,
+        pickupLocation: form.pickupLocation,
+        totalDay:       days,
+        totalPrice:     grandTotal,
+        paymentMethod:  form.paymentMethod,
+        dropLocation:   form.dropLocation,
+      });
+
       setBooked(true);
       setSubmitting(false);
       return;
     }
 
-    // Step 3: Create Razorpay order
-    const orderRes = await createRazorpayOrder(bookingId);
+    // ─── CASE B: ONLINE PAYMENT (RAZORPAY FIRST) ─────────────────────────────
+    // Step 1: Create a standalone Razorpay order by passing the amount
+    const orderRes = await createRazorpayOrder({ 
+      amount: grandTotal, 
+      carId:  car._id 
+    });
     const { orderId, amount, currency, keyId } = orderRes.data.data;
 
-    // Step 4: Load Razorpay script
+    // Step 2: Load Razorpay script onto the window layout
     const loaded = await loadRazorpay();
     if (!loaded) {
       setToast({ message: "Payment gateway failed to load. Try again.", type: "error" });
@@ -143,7 +145,7 @@ const handleSubmit = async (e) => {
       return;
     }
 
-    // Step 5: Open Razorpay checkout popup
+    // Step 3: Open Razorpay checkout interface immediately
     const options = {
       key:      keyId,
       amount,
@@ -158,17 +160,31 @@ const handleSubmit = async (e) => {
         email: user?.email,
       },
       handler: async (response) => {
-        // Step 6: Verify payment on backend
+        // Step 4: Run verification AND create the database booking record after success
         try {
-          await verifyRazorpayPayment({
+          await verifyAndCreateBooking({
+            // Payment signatures:
             razorpay_order_id:   response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature:  response.razorpay_signature,
-            bookingId,
+            // Form booking details:
+            car:            car._id,
+            startDate:      form.startDate,
+            endDate:        form.endDate,
+            requiredDriver: form.requiredDriver,
+            pickupLocation: form.pickupLocation,
+            totalDay:       days,
+            totalPrice:     grandTotal,
+            paymentMethod:  form.paymentMethod,
+            dropLocation:   form.dropLocation,
           });
+
           setBooked(true);
-        } catch {
-          setToast({ message: "Payment verification failed. Contact support.", type: "error" });
+        } catch (err) {
+          setToast({ 
+            message: err.response?.data?.message || "Payment verified but booking registration failed. Contact support.", 
+            type: "error" 
+          });
         }
         setSubmitting(false);
       },
@@ -204,14 +220,14 @@ const handleSubmit = async (e) => {
       <Overlay onClose={onClose}>
         <div className="flex flex-col items-center justify-center gap-5 p-10 text-center">
           <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-5xl">✓</div>
-          <h2 className="text-2xl font-bold text-white">Booking Confirmed!</h2>
-          <p className="text-slate-400">
-            Your <span className="text-yellow-400 font-semibold">{car.name}</span> is booked for{' '}
-            <span className="text-yellow-400 font-semibold">{days} day{days !== 1 ? "s" : ""}</span>.
-          </p>
-          <p className="text-slate-400">
-            Total paid: <span className="text-white font-bold">{fmt(grandTotal)}</span>
-          </p>
+          <h2 className="text-2xl font-bold text-white">Payment Received! 🎉</h2>
+            <p className="text-slate-400">
+              Your payment of <span className="text-yellow-400 font-semibold">{fmt(grandTotal)}</span> for{" "}
+              <span className="text-yellow-400 font-semibold">{car.name}</span> has been received.
+            </p>
+            <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-5 py-3 text-sm text-yellow-300 text-center">
+              ⏳ Your booking is <strong>Pending</strong> confirmation from the car owner. You'll receive an email once it's confirmed.
+            </div>
           <button
             onClick={onClose}
             className="mt-2 px-8 py-3 rounded-2xl bg-yellow-500 text-slate-900 font-bold hover:bg-yellow-400 transition"
@@ -291,6 +307,18 @@ const handleSubmit = async (e) => {
             />
           </div>
 
+          <div>
+            <label className={labelClass}>Drop-off Location</label>
+            <input
+              type="text"
+              name="dropLocation"
+              value={form.dropLocation}
+              onChange={handleChange}
+              placeholder="Enter city or address"
+              className={inputClass}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className={labelClass}>Number of Cars</label>
@@ -307,9 +335,9 @@ const handleSubmit = async (e) => {
             </div>
 
             <div
-              onClick={() => setForm((prev) => ({ ...prev, driverRequired: !prev.driverRequired }))}
+              onClick={() => setForm((prev) => ({ ...prev, requiredDriver: !prev.requiredDriver }))}
               className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition select-none ${
-                form.driverRequired
+                form.requiredDriver
                   ? "border-yellow-500 bg-yellow-500/10"
                   : "border-slate-700 bg-slate-900 hover:border-slate-500"
               }`}
@@ -319,7 +347,7 @@ const handleSubmit = async (e) => {
                 <p className="text-xs text-slate-400">{fmt(DRIVER_CHARGE_PER_DAY)}/day</p>
               </div>
               <div className={`w-11 h-6 rounded-full flex items-center px-1 transition-colors ${
-                form.driverRequired ? "bg-yellow-500 justify-end" : "bg-slate-700 justify-start"
+                form.requiredDriver ? "bg-yellow-500 justify-end" : "bg-slate-700 justify-start"
               }`}>
                 <div className="w-4 h-4 rounded-full bg-white shadow" />
               </div>
@@ -332,7 +360,7 @@ const handleSubmit = async (e) => {
               <span>{fmt(car.pricePerDay)} × {days || 0} day{days !== 1 ? "s" : ""} × {form.numberOfCars} car{form.numberOfCars > 1 ? "s" : ""}</span>
               <span className="text-white">{fmt(carTotal)}</span>
             </div>
-            {form.driverRequired && (
+            {form.requiredDriver && (
               <div className="flex justify-between text-sm text-slate-400">
                 <span>Driver ({fmt(DRIVER_CHARGE_PER_DAY)}/day × {days || 0} days × {form.numberOfCars})</span>
                 <span className="text-white">{fmt(driverTotal)}</span>

@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Bookings } from "../models/Booking.models.js";
 import { Cars } from "../models/Car.models.js";
 import { User } from "../models/User.models.js";
+import { sendBookingConfirmationEmail } from "../utils/mailer.js";
 
 const createBooking = asyncHandler(async (req, res) => {
     const {
@@ -15,8 +16,9 @@ const createBooking = asyncHandler(async (req, res) => {
         requiredDriver,
     } = req.body;
 
-    if (!car || !startDate || !endDate) {
-        throw new ApiError(400, "Required fields are missing");
+    // Validate required fields
+    if (!car || !startDate || !endDate || !pickupLocation) {
+        throw new ApiError(400, "Required fields are missing: car, startDate, endDate, pickupLocation");
     }
 
     const start = new Date(startDate);
@@ -47,7 +49,7 @@ const createBooking = asyncHandler(async (req, res) => {
     });
 
     if (conflict) {
-        throw new ApiError(400, "Car already booked for selected dates");
+        throw new ApiError(400, `This car is already booked from ${conflict.startDate.toDateString()} to ${conflict.endDate.toDateString()}. Please choose different dates.`);
     }
 
     const totalDay = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
@@ -61,12 +63,12 @@ const createBooking = asyncHandler(async (req, res) => {
         endDate: end,
         requiredDriver: requiredDriver || false,
         pickupLocation,
-        dropLocation,
+        dropLocation: dropLocation || pickupLocation, // Use pickupLocation as default if not provided
         totalDay,
         totalPrice,
     });
 
-    return res.status(200).json(new ApiResponse(200, booking, "Car successfully booked"));
+    return res.status(201).json(new ApiResponse(201, booking, "Car successfully booked"));
 });
 
 const getUserBooking= asyncHandler(async(req,res)=>{
@@ -143,6 +145,23 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
   if (!booking) {
     throw new ApiError(404, "Booking not found")
   }
+
+  if (newStatus === "Confirm") {
+    const user = await User.findById(booking.user);
+    await sendBookingConfirmationEmail({
+        to:             user.email,
+        fullname:       user.fullname,
+        carName:        booking.car?.name,
+        carId:          booking.car?._id,
+        licenceNumber:  user.licenceNumber,
+        startDate:      booking.startDate,
+        endDate:        booking.endDate,
+        totalDay:       booking.totalDay,
+        totalPrice:     booking.totalPrice,
+        pickupLocation: booking.pickupLocation,
+        paymentId:      "—",
+    });
+    }
 
   return res
   .status(200)

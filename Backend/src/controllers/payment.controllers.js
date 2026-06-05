@@ -18,8 +18,19 @@ const razorpay = new Razorpay({
 export const createRazorpayOrder = asyncHandler(async (req, res) => {
   const { bookingId } = req.body;
 
+  if (!bookingId) {
+    throw new ApiError(400, "Booking ID is required");
+  }
+
   const booking = await Bookings.findById(bookingId).populate("car");
-  if (!booking) throw new ApiError(404, "Booking not found");
+  if (!booking) {
+    throw new ApiError(404, `Booking with ID ${bookingId} not found`);
+  }
+
+  // Verify the booking belongs to the current user
+  if (booking.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Unauthorized: This booking does not belong to you");
+  }
 
   // Amount in paise (₹1 = 100 paise)
   const amountInPaise = Math.round(booking.totalPrice * 100);
@@ -88,8 +99,8 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   // Step 3: Update booking status to Confirm
   const booking = await Bookings.findByIdAndUpdate(
     bookingId,
-    { status: "Confirm" },
-    { new: true }
+    // { status: "Confirm" },
+    // { new: true }
   ).populate("car");
 
   // Step 4: Send confirmation email

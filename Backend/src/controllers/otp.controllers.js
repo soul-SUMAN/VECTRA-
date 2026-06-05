@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Otp } from "../models/Otp.models.js";
 import { sendOtpEmail } from "../utils/mailer.js";
 import { User } from "../models/User.models.js";
+import bcrypt from "bcrypt";
 
 // ─── Send OTP ─────────────────────────────────────────────────────────────────
 export const sendOtp = asyncHandler(async (req, res) => {
@@ -49,4 +50,22 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   await Otp.deleteMany({ email, purpose });
 
   return res.status(200).json(new ApiResponse(200, { verified: true }, "OTP verified"));
+});
+
+
+// ─── Reset password after OTP verified ────────────────────────────────────────
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword) {
+    throw new ApiError(400, "Email and new password are required");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  user.password = newPassword; // pre-save hook hashes it automatically
+  await user.save();
+
+  return res.status(200).json(new ApiResponse(200, {}, "Password reset successfully"));
 });
