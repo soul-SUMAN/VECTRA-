@@ -6,6 +6,7 @@ import { addToWishlist } from "../api/wishlistService";
 import { useAuth } from "../context/AuthContext";
 import Toast from "../components/Toast";
 import BookingModal from "../components/BookingModal";
+import { getWishlist } from "../api/wishlistService";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const FuelIcon   = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -191,6 +192,27 @@ export default function Cars() {
     e.preventDefault();
     fetchCars(filters);
   };
+
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const seedWishlist = async () => {
+      try {
+        const res = await getWishlist();
+        const items = res.data.data || [];
+        // Build { carId: true } map from DB wishlist
+        const map = {};
+        items.forEach((item) => {
+          const id = item._id || item.car?._id;
+          if (id) map[id] = true;
+        });
+        setWishlisted(map);
+      } catch {
+        // silently fail — wishlist state just stays empty
+      }
+    };
+    seedWishlist();
+  }, [isAuthenticated]);
 
   const handleWishlist = async (carId) => {
     if (!isAuthenticated) {
