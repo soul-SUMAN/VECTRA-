@@ -129,11 +129,13 @@ const handleSubmit = async (e) => {
       return;
     }
 
-    // ─── CASE B: ONLINE PAYMENT (RAZORPAY FIRST) ─────────────────────────────
-    // Step 1: Create a standalone Razorpay order by passing the amount
-    const orderRes = await createRazorpayOrder({ 
-      amount: grandTotal, 
-      carId:  car._id 
+    // ── CASE B: ONLINE — Razorpay FIRST, booking created only after payment ──
+
+    // Step 1: Create a Razorpay order — just needs amount + carId
+    // No booking in DB yet
+    const orderRes = await createRazorpayOrder({
+      amount: grandTotal,
+      carId:  car._id,
     });
     const { orderId, amount, currency, keyId } = orderRes.data.data;
 
@@ -162,11 +164,12 @@ const handleSubmit = async (e) => {
       handler: async (response) => {
         // Step 4: Run verification AND create the database booking record after success
         try {
-          await verifyAndCreateBooking({
+          await verifyRazorpayPayment({
             // Payment signatures:
             razorpay_order_id:   response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature:  response.razorpay_signature,
+
             // Form booking details:
             car:            car._id,
             startDate:      form.startDate,
@@ -182,7 +185,7 @@ const handleSubmit = async (e) => {
           setBooked(true);
         } catch (err) {
           setToast({ 
-            message: err.response?.data?.message || "Payment verified but booking registration failed. Contact support.", 
+            message: err.response?.data?.message || "Payment done but booking failed. Contact support with payment ID: " + response.razorpay_payment_id,
             type: "error" 
           });
         }
@@ -190,7 +193,7 @@ const handleSubmit = async (e) => {
       },
       modal: {
         ondismiss: () => {
-          setToast({ message: "Payment cancelled", type: "info" });
+          setToast({ message: "Payment cancelled. No booking was made.", type: "info" });
           setSubmitting(false);
         },
       },

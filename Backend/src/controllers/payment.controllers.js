@@ -5,8 +5,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Payment } from "../models/Payment.models.js";
 import { Bookings } from "../models/Booking.models.js";
-import { sendBookingConfirmationEmail } from "../utils/mailer.js";
 import { User } from "../models/User.models.js";
+import { Cars } from "../models/Car.models.js";
+import { sendPaymentReceivedEmail  } from "../utils/mailer.js";
 
 const razorpay = new Razorpay({
   key_id:     process.env.RAZORPAY_KEY_ID,
@@ -15,109 +16,161 @@ const razorpay = new Razorpay({
 
 // ─── 1. Create Razorpay Order ─────────────────────────────────────────────────
 // Called before showing the Razorpay checkout popup
-export const createRazorpayOrder = asyncHandler(async (req, res) => {
-  const { bookingId } = req.body;
+  export const createRazorpayOrder = asyncHandler(async (req, res) => {
+    const { amount, carId } = req.body;
 
-  if (!bookingId) {
-    throw new ApiError(400, "Booking ID is required");
-  }
+    if (!amount || !carId) {
+      throw new ApiError(400, "Amount and Car ID are required");
+    }
 
-  const booking = await Bookings.findById(bookingId).populate("car");
-  if (!booking) {
-    throw new ApiError(404, `Booking with ID ${bookingId} not found`);
-  }
+    // Verify the car exists
+    const car = await Cars.findById(carId);
+    if (!car) {
+      throw new ApiError(404, "Car not found");
+    }
 
-  // Verify the booking belongs to the current user
-  if (booking.user.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Unauthorized: This booking does not belong to you");
-  }
 
-  // Amount in paise (₹1 = 100 paise)
-  const amountInPaise = Math.round(booking.totalPrice * 100);
+    // Amount in paise (₹1 = 100 paise)
+    const amountInPaise = Math.round(amount * 100);
 
-  const order = await razorpay.orders.create({
-    amount:   amountInPaise,
-    currency: "INR",
-    receipt:  `booking_${bookingId}`,
-    notes: {
-      bookingId: bookingId.toString(),
-      userId:    req.user._id.toString(),
-    },
-  });
+    if (amountInPaise < 100) {
+      throw new ApiError(400, "Amount must be at least ₹1");
+    }
 
-  // Save a pending payment record
-  await Payment.create({
-    user:            req.user._id,
-    booking:         bookingId,
-    amount:          booking.totalPrice,
-    razorpayOrderId: order.id,
-    paymentStatus:   "Pending",
-    paymentMethod:   "Online",
-  });
-
-  return res.status(200).json(
-    new ApiResponse(200, {
-      orderId:  order.id,
+    // Create Razorpay order — no booking in DB yet
+    const order = await razorpay.orders.create({
       amount:   amountInPaise,
       currency: "INR",
-      keyId:    process.env.RAZORPAY_KEY_ID,
-    }, "Order created")
-  );
-});
+      receipt:  `vectra_${Date.now()}`,
+      notes: {
+        carId:  carId.toString(),
+        userId: req.user._id.toString(),
+      },
+    });
 
-// ─── 2. Verify Payment Signature ──────────────────────────────────────────────
-// Called after user completes payment on Razorpay popup
-export const verifyPayment = asyncHandler(async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
+
+    return res.status(200).json(
+      new ApiResponse(200, {
+        orderId:  order.id,
+        amount:   amountInPaise,
+        currency: "INR",
+        keyId:    process.env.RAZORPAY_KEY_ID,
+      }, "Razorpay order created")
+    );
+  });
+
+// ─── 2. Verify Payment + Create Booking ───────────────────────────────────────
+// Called AFTER user pays on Razorpay popup
+// Verifies signature — if valid, creates booking in DB (status = Pending)
+
+  export const verifyPayment = asyncHandler(async (req, res) => {
+    const {
+      // Razorpay payment proof
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      // Booking details from frontend form
+      car,
+      startDate,
+      endDate,
+      requiredDriver,
+      pickupLocation,
+      dropLocation,
+      totalDay,
+      totalPrice,
+      paymentMethod,
+    } = req.body;
 
   // Step 1: Verify signature (HMAC SHA256)
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(body)
-    .digest("hex");
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
 
-  if (expectedSignature !== razorpay_signature) {
-    // Signature mismatch — mark payment failed
-    await Payment.findOneAndUpdate(
-      { razorpayOrderId: razorpay_order_id },
-      { paymentStatus: "Failed" }
-    );
-    throw new ApiError(400, "Payment verification failed");
-  }
+    if (expectedSignature !== razorpay_signature) {
+      throw new ApiError(400, "Payment verification failed — invalid signature. Contact support.");
+    }
 
-  // Step 2: Update payment record
-  await Payment.findOneAndUpdate(
-    { razorpayOrderId: razorpay_order_id },
-    {
+    // ── Step 2: Signature valid — check for booking conflicts before creating ──
+    const start = new Date(startDate);
+    const end   = new Date(endDate);
+
+    const conflict = await Bookings.findOne({
+      car,
+      status: { $in: ["Pending", "Confirm"] },
+      $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }],
+    });
+
+    if (conflict) {
+      // Payment was taken but dates are now conflicted
+      // Save payment record as Success but flag the issue
+      await Payment.create({
+        user:              req.user._id,
+        amount:            totalPrice,
+        razorpayOrderId:   razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        paymentStatus:     "Success",
+        paymentMethod:     "Online",
+      });
+
+      throw new ApiError(
+        409,
+        `Payment received (ID: ${razorpay_payment_id}) but these dates are now taken. Please contact support for a refund.`
+      );
+    }
+
+  // ── Step 3: Create booking — payment verified, dates available ────────────
+  const carData = await Cars.findById(car);
+    if (!carData) throw new ApiError(404, "Car not found");
+
+    const booking = await Bookings.create({
+      user:           req.user._id,
+      car,
+      admin:          carData.owner,
+      startDate:      start,
+      endDate:        end,
+      requiredDriver: requiredDriver || false,
+      pickupLocation,
+      dropLocation:   dropLocation || pickupLocation,
+      totalDay:       Number(totalDay),
+      totalPrice:     Number(totalPrice),
+      status:         "Pending",   // always starts Pending — admin confirms
+      paymentMethod,
+    });
+
+  // ── Step 4: Save payment record linked to the new booking ─────────────────
+    await Payment.create({
+      user:              req.user._id,
+      booking:           booking._id,
+      amount:            Number(totalPrice),
+      razorpayOrderId:   razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
       paymentStatus:     "Success",
-    }
-  );
+      paymentMethod:     "Online",
+    });
 
-  // Step 3: Update booking status to Confirm
-  const booking = await Bookings.findByIdAndUpdate(
-    bookingId,
-    // { status: "Confirm" },
-    // { new: true }
-  ).populate("car");
 
-  // Step 4: Send confirmation email
-  const user = await User.findById(req.user._id);
-  await sendBookingConfirmationEmail({
-    to:             user.email,
-    fullname:       user.fullname,
-    carName:        booking.car?.name,
-    startDate:      booking.startDate,
-    endDate:        booking.endDate,
-    totalDay:       booking.totalDay,
-    totalPrice:     booking.totalPrice,
-    pickupLocation: booking.pickupLocation,
-    paymentId:      razorpay_payment_id,
-  });
+    // ── Step 5: Send "payment received, pending confirmation" email ───────────
+    const user = await User.findById(req.user._id);
+    await sendPaymentReceivedEmail({
+      to:             user.email,
+      fullname:       user.fullname,
+      carName:        carData.name,
+      totalPrice:     Number(totalPrice),
+      paymentId:      razorpay_payment_id,
+      startDate:      start,
+      endDate:        end,
+      pickupLocation,
+    });
 
-  return res.status(200).json(
-    new ApiResponse(200, { paymentId: razorpay_payment_id }, "Payment verified successfully")
-  );
+    return res.status(201).json(
+      new ApiResponse(201, {
+        bookingId: booking._id,
+        paymentId: razorpay_payment_id,
+        status:    "Pending",
+      }, "Payment verified. Booking created and pending admin confirmation.")
+    );
 });

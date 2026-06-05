@@ -28,7 +28,7 @@ const paymentSchema=new mongoose.Schema(
 
     },
     {
-        timestemp:true
+        timestemps:true
 
     }
 )

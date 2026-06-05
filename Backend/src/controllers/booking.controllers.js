@@ -40,6 +40,10 @@ const createBooking = asyncHandler(async (req, res) => {
 
     const conflict = await Bookings.findOne({
         car,
+        status: 
+        { 
+            $in: ["Pending", "Confirm"] 
+        },
         $or: [
             {
                 startDate: { $lte: end },
@@ -146,13 +150,13 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
     throw new ApiError(404, "Booking not found")
   }
 
-  if (newStatus === "Confirm") {
+  if (status === "Confirm") {
     const user = await User.findById(booking.user);
     await sendBookingConfirmationEmail({
         to:             user.email,
         fullname:       user.fullname,
         carName:        booking.car?.name,
-        carId:          booking.car?._id,
+        carId:          booking.car?._id.toString(),
         licenceNumber:  user.licenceNumber,
         startDate:      booking.startDate,
         endDate:        booking.endDate,

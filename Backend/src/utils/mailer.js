@@ -100,7 +100,38 @@ export const sendOtpEmail = async ({ to, otp, purpose = "verification" }) => {
   });
 };
 
-// ─── 3. Booking confirmation email ────────────────────────────────────────────
+// ─── 3. Payment received — pending admin confirmation ─────────────────────────
+  export const sendPaymentReceivedEmail = async ({
+    to, fullname, carName, totalPrice, paymentId, startDate, endDate, pickupLocation
+  }) => {
+    const fmt = (d) => new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "long", year: "numeric"
+    });
+
+    await sendMail({
+      to,
+      subject: `Payment Received — Awaiting Confirmation | VECTRA`,
+      html: baseTemplate(`
+        <h2 style="color:#f1f5f9">Payment Received! ⏳</h2>
+        <p>Hi <strong style="color:#f59e0b">${fullname}</strong>, your payment has been received successfully.</p>
+        <p>Your booking is now <strong style="color:#f59e0b">Pending</strong> — the car owner will review and confirm shortly. You'll receive another email once it's confirmed.</p>
+
+        <div class="card">
+          <div class="card-row"><span class="card-label">🚗 Car</span><span class="card-value">${carName}</span></div>
+          <div class="card-row"><span class="card-label">📅 Pickup Date</span><span class="card-value">${fmt(startDate)}</span></div>
+          <div class="card-row"><span class="card-label">🏁 Drop-off Date</span><span class="card-value">${fmt(endDate)}</span></div>
+          <div class="card-row"><span class="card-label">📍 Pickup Location</span><span class="card-value">${pickupLocation}</span></div>
+          <div class="card-row"><span class="card-label">💳 Payment ID</span><span class="card-value" style="font-family:monospace;font-size:11px">${paymentId}</span></div>
+          <div class="card-row"><span class="card-label">💰 Amount Paid</span><span class="card-value total">₹${Number(totalPrice).toLocaleString("en-IN")}</span></div>
+        </div>
+
+        <p style="color:#94a3b8;font-size:13px">We'll notify you as soon as the car owner confirms your booking.</p>
+        <a href="${process.env.FRONTEND_URL}/bookings" class="btn">View My Bookings →</a>
+      `),
+    });
+  };
+
+// ─── 4. Booking confirmation email ────────────────────────────────────────────
   export const sendBookingConfirmationEmail = async ({
     to, fullname, carName, carId, licenceNumber,
     startDate, endDate, totalDay, totalPrice, pickupLocation, paymentId
@@ -139,7 +170,7 @@ export const sendOtpEmail = async ({ to, otp, purpose = "verification" }) => {
     });
   };
 
-// ─── 4. Contact Form Submission Email ──────────────────────────────────────────
+// ─── 5. Contact Form Submission Email ──────────────────────────────────────────
 export const sendContactEmail = async ({ name, email, message }) => {
   // 1. Send notification copy to your platform admin email
   await sendMail({
@@ -159,7 +190,7 @@ export const sendContactEmail = async ({ name, email, message }) => {
     `),
   });
 
-  // 2. Send an automated confirmation back to the customer
+  // 6. Send an automated confirmation back to the customer
   await sendMail({
     to: email, // Sends acknowledgment back to the visitor
     subject: "We received your message! — VECTRA 🚗",

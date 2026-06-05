@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "../models/User.models.js";
+import { sendWelcomeEmail } from "./mailer.js";
 
 passport.use(
   new GoogleStrategy(
@@ -31,6 +32,7 @@ passport.use(
             username,
             password: Math.random().toString(36), // random password — Google users log in via OAuth only
           });
+          await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
         }
 
         return done(null, user);
@@ -41,15 +43,15 @@ passport.use(
   )
 );
 
-// Minimal serialize/deserialize — only used for the OAuth redirect flow
-passport.serializeUser((user, done) => done(null, data.user._id));
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, {user, isNewUser: false} );
-  } catch (err) {
-    done(err, null);
-  }
-});
+// // Minimal serialize/deserialize — only used for the OAuth redirect flow
+// passport.serializeUser((user, done) => done(null, user._id));
+// passport.deserializeUser(async (id, done) => {
+//   try {
+//     const user = await User.findById(id);
+//     done(null, {user, isNewUser: false} );
+//   } catch (err) {
+//     done(err, null);
+//   }
+// });
 
 export default passport;

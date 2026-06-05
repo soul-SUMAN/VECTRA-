@@ -381,7 +381,7 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
   // req.user is set by passport after Google verification
   const {user, isNewUser} = req.user;
 
-  if (isNew) {
+  if (isNewUser) {
     await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
   }
 
