@@ -58,25 +58,30 @@ const sendMail = async ({ to, subject, html }) => {
   });
 };
 
-// ─── 1. Welcome email on registration ─────────────────────────────────────────
-export const sendWelcomeEmail = async ({ to, fullname }) => {
-  await sendMail({
-    to,
-    subject: "Welcome to VECTRA 🚗",
-    html: baseTemplate(`
-      <h2>Welcome, ${fullname}! 🎉</h2>
-      <p>Your VECTRA account has been created successfully. You can now browse our fleet, book cars, and manage your rides all in one place.</p>
-      <p>Here's what you can do on VECTRA:</p>
-      <div class="card">
-        <div class="card-row"><span class="card-label">🚗 Browse Cars</span><span class="card-value">500+ vehicles</span></div>
-        <div class="card-row"><span class="card-label">📍 Flexible Pickup</span><span class="card-value">50+ cities</span></div>
-        <div class="card-row"><span class="card-label">🧑‍✈️ Driver Option</span><span class="card-value">₹500/day</span></div>
-        <div class="card-row"><span class="card-label">🛡️ Fully Insured</span><span class="card-value">Every ride</span></div>
-      </div>
-      <a href="${process.env.FRONTEND_URL}/cars" class="btn">Browse Cars →</a>
-    `),
-  });
-};
+// ───1. Welcome Email (redesigned with car imagery) ──────────────────────────────
+  export const sendWelcomeEmail = async ({ to, fullname }) => {
+    await sendMail({
+      to,
+      subject: "Welcome to VECTRA — Your Journey Starts Here 🚗",
+      html: baseTemplate(`
+        <div style="text-align:center;margin-bottom:24px">
+          <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=560&q=80"
+              alt="car" style="width:100%;border-radius:16px;max-height:200px;object-fit:cover"/>
+        </div>
+        <h2 style="color:#f1f5f9">Welcome aboard, <span style="color:#f59e0b">${fullname}</span>! 🎉</h2>
+        <p>Your VECTRA account is ready. You now have access to 500+ cars across 50+ cities — all from your phone or laptop.</p>
+        <div class="card">
+          <div class="card-row"><span class="card-label">🚗 Browse Fleet</span><span class="card-value">500+ vehicles</span></div>
+          <div class="card-row"><span class="card-label">📍 Pickup Anywhere</span><span class="card-value">50+ cities</span></div>
+          <div class="card-row"><span class="card-label">🧑‍✈️ Driver Option</span><span class="card-value">₹500/day add-on</span></div>
+          <div class="card-row"><span class="card-label">🛡️ Full Insurance</span><span class="card-value">Every car covered</span></div>
+          <div class="card-row"><span class="card-label">💳 Secure Payment</span><span class="card-value">Razorpay powered</span></div>
+        </div>
+        <p style="color:#64748b;font-size:13px">Need help? Reply to this email or visit our website anytime.</p>
+        <a href="${process.env.FRONTEND_URL}/cars" class="btn">Browse Cars Now →</a>
+      `),
+    });
+  };
 
 // ─── 2. OTP email ─────────────────────────────────────────────────────────────
 export const sendOtpEmail = async ({ to, otp, purpose = "verification" }) => {
@@ -96,26 +101,75 @@ export const sendOtpEmail = async ({ to, otp, purpose = "verification" }) => {
 };
 
 // ─── 3. Booking confirmation email ────────────────────────────────────────────
-export const sendBookingConfirmationEmail = async ({
-  to, fullname, carName, startDate, endDate, totalDay, totalPrice, pickupLocation, paymentId
-}) => {
-  const fmt = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  export const sendBookingConfirmationEmail = async ({
+    to, fullname, carName, carId, licenceNumber,
+    startDate, endDate, totalDay, totalPrice, pickupLocation, paymentId
+  }) => {
+    const fmt = (d) => new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "long", year: "numeric"
+    });
+
+    await sendMail({
+      to,
+      subject: `✅ Booking Confirmed — ${carName} | VECTRA`,
+      html: baseTemplate(`
+        <h2 style="color:#f1f5f9">Your Booking is <span style="color:#22c55e">Confirmed</span>! ✅</h2>
+        <p>Hi <strong style="color:#f59e0b">${fullname}</strong>, great news — the car owner has confirmed your booking. Here are your complete details:</p>
+
+        <div class="card">
+          <div class="card-row"><span class="card-label">🚗 Car</span><span class="card-value">${carName}</span></div>
+          <div class="card-row"><span class="card-label">🆔 Car ID</span><span class="card-value" style="font-family:monospace;font-size:11px">${carId}</span></div>
+          <div class="card-row"><span class="card-label">📅 Pickup Date</span><span class="card-value">${fmt(startDate)}</span></div>
+          <div class="card-row"><span class="card-label">🏁 Drop-off Date</span><span class="card-value">${fmt(endDate)}</span></div>
+          <div class="card-row"><span class="card-label">⏱ Duration</span><span class="card-value">${totalDay} day${totalDay !== 1 ? "s" : ""}</span></div>
+          <div class="card-row"><span class="card-label">📍 Pickup Location</span><span class="card-value">${pickupLocation}</span></div>
+          <div class="card-row"><span class="card-label">🪪 Licence Number</span><span class="card-value">${licenceNumber || "Not provided"}</span></div>
+          <div class="card-row"><span class="card-label">💳 Payment ID</span><span class="card-value" style="font-family:monospace;font-size:11px">${paymentId}</span></div>
+        </div>
+
+        <div style="background:#0f172a;border:1px solid #22c55e33;border-radius:12px;padding:16px;margin:16px 0;text-align:center">
+          <p style="color:#22c55e;font-size:15px;font-weight:700;margin:0">
+            Total Paid: ₹${Number(totalPrice).toLocaleString("en-IN")}
+          </p>
+        </div>
+
+        <p style="color:#94a3b8;font-size:13px">Please carry a valid photo ID and your licence (<strong>${licenceNumber || "update in profile"}</strong>) at the time of pickup.</p>
+        <a href="${process.env.FRONTEND_URL}/bookings" class="btn">View My Bookings →</a>
+      `),
+    });
+  };
+
+// ─── 4. Contact Form Submission Email ──────────────────────────────────────────
+export const sendContactEmail = async ({ name, email, message }) => {
+  // 1. Send notification copy to your platform admin email
   await sendMail({
-    to,
-    subject: `Booking Confirmed — ${carName} | VECTRA`,
+    to: process.env.EMAIL_USER, // Sends the customer's message to your inbox
+    subject: `New Contact Form Submission from ${name} 📬`,
     html: baseTemplate(`
-      <h2>Your Booking is Confirmed! ✅</h2>
-      <p>Hi ${fullname}, your car rental has been confirmed and payment received. Here are your booking details:</p>
+      <h2>New Message Received via Web Contact Form</h2>
+      <p>A user has submitted a message on the VECTRA platform. Here are the details:</p>
       <div class="card">
-        <div class="card-row"><span class="card-label">Car</span><span class="card-value">${carName}</span></div>
-        <div class="card-row"><span class="card-label">Pickup Date</span><span class="card-value">${fmt(startDate)}</span></div>
-        <div class="card-row"><span class="card-label">Drop-off Date</span><span class="card-value">${fmt(endDate)}</span></div>
-        <div class="card-row"><span class="card-label">Duration</span><span class="card-value">${totalDay} day${totalDay !== 1 ? "s" : ""}</span></div>
-        <div class="card-row"><span class="card-label">Pickup Location</span><span class="card-value">${pickupLocation}</span></div>
-        <div class="card-row"><span class="card-label">Payment ID</span><span class="card-value">${paymentId}</span></div>
-        <div class="card-row"><span class="card-label">Total Paid</span><span class="card-value total">₹${Number(totalPrice).toLocaleString("en-IN")}</span></div>
+        <div class="card-row"><span class="card-label">Name</span><span class="card-value">${name}</span></div>
+        <div class="card-row"><span class="card-label">Email Address</span><span class="card-value">${email}</span></div>
       </div>
-      <a href="${process.env.FRONTEND_URL}/bookings" class="btn">View My Bookings →</a>
+      <div class="card" style="background:#0f172a; padding:16px;">
+        <p style="color:#64748b; font-size:12px; margin-bottom:4px; text-transform:uppercase;">Message Context:</p>
+        <p style="color:#f1f5f9; font-size:14px; white-space:pre-wrap; margin:0;">${message}</p>
+      </div>
+    `),
+  });
+
+  // 2. Send an automated confirmation back to the customer
+  await sendMail({
+    to: email, // Sends acknowledgment back to the visitor
+    subject: "We received your message! — VECTRA 🚗",
+    html: baseTemplate(`
+      <h2>Hi ${name}, thank you for reaching out! 👋</h2>
+      <p>We have successfully received your contact form submission. Our support team is available 24/7 and will review your message immediately.</p>
+      <p>If your inquiry is urgent, feel free to reply directly to this email or reach us at +91 98765 43210.</p>
+      <div class="card" style="border-left: 4px solid #f59e0b;">
+        <p style="color:#94a3b8; font-style:italic; margin:0;">"Our goal is to make car rental simple, transparent, and completely stress-free."</p>
+      </div>
     `),
   });
 };

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
+import { submitContact } from "../api/contactService.js";
 
 const STATS = [
   { value: "500+", label: "Cars Available" },
@@ -104,6 +105,8 @@ export default function Home() {
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [contactSent, setContactSent] = useState(false);
   const today = new Date().toISOString().split("T")[0];
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError,   setContactError]   = useState("");
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -119,12 +122,23 @@ export default function Home() {
     setContactForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
-    setContactSent(true);
-    setContactForm({ name: "", email: "", message: "" });
-    setTimeout(() => setContactSent(false), 4000);
+    setContactLoading(true);
+    setContactError("");
+    try {
+      await submitContact(contactForm);
+      setContactSent(true);
+      setContactForm({ name: "", email: "", message: "" });
+      setTimeout(() => setContactSent(false), 5000);
+    } catch (err) {
+      setContactError(err.response?.data?.message || "Failed to send. Try again.");
+    } finally {
+      setContactLoading(false);
+    }
   };
+
+
 
   return (
     <div className="bg-slate-950 text-white">
@@ -425,8 +439,18 @@ export default function Home() {
                   className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
                 />
               </div>
-              <button type="submit" className="w-full rounded-2xl bg-yellow-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-400">
-                Send Message
+
+              {/* {error display} */}
+              {contactError && (
+                <p className="text-red-400 text-sm">{contactError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={contactLoading}
+                className="w-full py-3 rounded-2xl bg-yellow-500 text-slate-900 font-bold hover:bg-yellow-400 transition active:scale-95 disabled:opacity-60"
+              >
+                {contactLoading ? "Sending..." : "Send Message"}
               </button>
             </form>
           </div>

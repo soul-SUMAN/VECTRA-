@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+
 const app = express();
 
 // configure cors
@@ -15,14 +16,16 @@ app.use(cors({
     const allowed = [
       "http://localhost:5173",
         // your laptop IP
-    ];
+    ].filter(Boolean);
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error(`CORS: origin ${origin} not allowed`));
     }
   },
-  credentials: true
+  credentials: true,
+  methods:     ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(passport.initialize());
@@ -46,9 +49,10 @@ import carRouter from "./routers/car.routes.js";
 import bookingsRouter from "./routers/booking.routes.js";
 import wishlistRouter from "./routers/wishlist.routes.js";
 import dashboardRouter from "./routers/dashboard.routes.js";
-import passport from "./utils/passport.js";
 import paymentRouter from "./routers/payment.routes.js";
 import otpRouter from "./routers/otp.routes.js";
+import contactRouter from "./routers/contact.routes.js";
+import passport from "./utils/passport.js";
 
 
 
@@ -61,6 +65,7 @@ app.use("/api/v1/dashboard", dashboardRouter);
 
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/otp", otpRouter);
+app.use("/api/v1/contact", contactRouter);
 
 
 export { app };
