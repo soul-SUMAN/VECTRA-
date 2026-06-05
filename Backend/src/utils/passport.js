@@ -17,10 +17,12 @@ passport.use(
 
         // Check if user exists
         let user = await User.findOne({ email });
+        let isNewUser = false;
 
         if (!user) {
           // Auto-register with Google data
           // Username: first part of email + random 4 digits
+          isNewUser= true;
           const username = email.split("@")[0] + Math.floor(1000 + Math.random() * 9000);
           user = await User.create({
             email,
@@ -40,11 +42,11 @@ passport.use(
 );
 
 // Minimal serialize/deserialize — only used for the OAuth redirect flow
-passport.serializeUser((user, done) => done(null, user._id));
+passport.serializeUser((user, done) => done(null, data.user._id));
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
-    done(null, user);
+    done(null, {user, isNewUser: false} );
   } catch (err) {
     done(err, null);
   }

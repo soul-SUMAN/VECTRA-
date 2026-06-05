@@ -100,7 +100,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     // Send welcome email (non-blocking)
     await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
 
-    console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
+    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
 
     //8. Return response
     return res.status(201).json(
@@ -379,7 +379,11 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
 // ─── Google OAuth callback handler ────────────────────────────────────────────
 const googleAuthCallback = asyncHandler(async (req, res) => {
   // req.user is set by passport after Google verification
-  const user = req.user;
+  const {user, isNewUser} = req.user;
+
+  if (isNew) {
+    await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
+  }
 
   const { accessToken, refreshToken } = await generateRefreshAndAccessToken(user._id);
 
