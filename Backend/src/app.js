@@ -16,6 +16,7 @@ app.use(cors({
     const allowed = [
       "http://localhost:5173",
         // your laptop IP
+      "https://vectracars.vercel.app",
     ].filter(Boolean);
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
