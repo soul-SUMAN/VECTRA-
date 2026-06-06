@@ -225,7 +225,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                <a href={`${BACKEND_URL}/api/v1/user/auth/google`}
+                <a href={`${BACKEND_URL}user/auth/google`}
                   className="flex items-center justify-center gap-3 w-full py-3 rounded-xl border border-slate-600
                             bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition"
                 >
@@ -273,7 +273,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                <a href={`${BACKEND_URL}/api/v1/user/auth/google`}
+                <a href={`${BACKEND_URL}user/auth/google`}
                   className="flex items-center justify-center gap-3 w-full py-3 rounded-xl border border-slate-600
                             bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition"
                 >
