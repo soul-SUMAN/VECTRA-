@@ -23,7 +23,7 @@ passport.use(
         if (!user) {
           // Auto-register with Google data
           // Username: first part of email + random 4 digits
-          isNewUser= true;
+          isNewUser = true;
           const username = email.split("@")[0] + Math.floor(1000 + Math.random() * 9000);
           user = await User.create({
             email,
@@ -35,7 +35,7 @@ passport.use(
           await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
         }
 
-        return done(null, user);
+        return done(null, { user, isNewUser });
       } catch (error) {
         return done(error, null);
       }

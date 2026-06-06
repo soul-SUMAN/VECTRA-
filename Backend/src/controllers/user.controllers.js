@@ -165,7 +165,7 @@ const loginUser= asyncHandler(async(req,res)=>{
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     };
 
-    console.log("email: ", email , "\npassword:" , password , "\nusername:" , username);
+    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username);
     return res
             .status(200)
             .cookie("accessToken", accessToken, cookieOptions)
@@ -379,7 +379,13 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
 // ─── Google OAuth callback handler ────────────────────────────────────────────
 const googleAuthCallback = asyncHandler(async (req, res) => {
   // req.user is set by passport after Google verification
-  const {user, isNewUser} = req.user;
+  const googleUserPayload = req.user || {};
+  const user = googleUserPayload.user || req.user;
+  const isNewUser = googleUserPayload.isNewUser ?? false;
+
+  if (!user?._id) {
+    throw new ApiError(500, "Google authentication failed: user object is missing");
+  }
 
   if (isNewUser) {
     await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
