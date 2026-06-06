@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import OtpModal from "../components/OtpModal";
 import { sendOtp, verifyOtp, resetPassword } from "../api/otpService.js";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export default function Login() {
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -223,8 +225,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                <a 
-                  href="http://localhost:4000/api/v1/user/auth/google"
+                <a href={`${BACKEND_URL}/api/v1/user/auth/google`}
                   className="flex items-center justify-center gap-3 w-full py-3 rounded-xl border border-slate-600
                             bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition"
                 >
@@ -272,8 +273,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                <a 
-                  href="http://localhost:4000/api/v1/user/auth/google"
+                <a href={`${BACKEND_URL}/api/v1/user/auth/google`}
                   className="flex items-center justify-center gap-3 w-full py-3 rounded-xl border border-slate-600
                             bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition"
                 >
