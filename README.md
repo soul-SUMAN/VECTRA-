@@ -105,82 +105,121 @@ Built as part of an internship project at **Euphoria GenX** (ISO 9001:2015 certi
 ---
 
 ## 📁 Project Structure
-```
-vectra/
-├── backend/
+```text
+VECTRA/
+├── Backend/
 │   ├── src/
 │   │   ├── controllers/
-│   │   │   ├── user.controllers.js
-│   │   │   ├── car.controllers.js
 │   │   │   ├── booking.controllers.js
-│   │   │   ├── payment.controllers.js
-│   │   │   ├── wishlist.controllers.js
-│   │   │   ├── dashboard.controllers.js
+│   │   │   ├── car.controllers.js
 │   │   │   ├── contact.controllers.js
-│   │   │   └── otp.controllers.js
-│   │   ├── models/
-│   │   │   ├── User.models.js
-│   │   │   ├── Car.models.js
-│   │   │   ├── Booking.models.js
-│   │   │   ├── Payment.models.js
-│   │   │   ├── Wishlist.models.js
-│   │   │   ├── Contact.model.js
-│   │   │   └── Otp.model.js
-│   │   ├── routes/
-│   │   │   ├── user.router.js
-│   │   │   ├── car.router.js
-│   │   │   ├── booking.router.js
-│   │   │   ├── payment.router.js
-│   │   │   ├── wishlist.router.js
-│   │   │   ├── dashboard.router.js
-│   │   │   ├── contact.router.js
-│   │   │   └── otp.router.js
+│   │   │   ├── dashboard.controllers.js
+│   │   │   ├── otp.controllers.js
+│   │   │   ├── payment.controllers.js
+│   │   │   ├── user.controllers.js
+│   │   │   └── wishlist.controllers.js
+│   │   │
 │   │   ├── middleware/
 │   │   │   └── auth.middleware.js
+│   │   │
+│   │   ├── models/
+│   │   │   ├── Booking.models.js
+│   │   │   ├── Car.models.js
+│   │   │   ├── Contact.model.js
+│   │   │   ├── Otp.model.js
+│   │   │   ├── Payment.models.js
+│   │   │   ├── User.models.js
+│   │   │   └── Wishlist.models.js
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── booking.router.js
+│   │   │   ├── car.router.js
+│   │   │   ├── contact.router.js
+│   │   │   ├── dashboard.router.js
+│   │   │   ├── otp.router.js
+│   │   │   ├── payment.router.js
+│   │   │   ├── user.router.js
+│   │   │   └── wishlist.router.js
+│   │   │
 │   │   ├── utils/
-│   │   │   ├── mailer.js
-│   │   │   ├── passport.js
-│   │   │   ├── cloudinary.js
-│   │   │   ├── asyncHandler.js
 │   │   │   ├── ApiError.js
-│   │   │   └── ApiResponse.js
+│   │   │   ├── ApiResponse.js
+│   │   │   ├── asyncHandler.js
+│   │   │   ├── cloudinary.js
+│   │   │   ├── mailer.js
+│   │   │   └── passport.js
+│   │   │
 │   │   ├── app.js
-│   │   └── index.js
-│   └── package.json
+│   │   ├── constants.js
+|   |   └── server.js
+│   │
+│   |
+│   ├── .env
+│   ├── .gitignore
+│   ├── package.json
+│   ├── package-lock.json
+│   └── README.md
 │
-└── frontend/
-├── src/
-│   ├── api/
-│   │   ├── apiManager.js
-│   │   ├── userService.js
-│   │   ├── carService.js
-│   │   ├── bookingService.js
-│   │   ├── paymentService.js
-│   │   ├── wishlistService.js
-│   │   ├── contactService.js
-│   │   ├── dashboardService.js
-│   │   └── otpService.js
-│   ├── context/
-│   │   └── AuthContext.jsx
-│   ├── components/
-│   │   ├── Navbar.jsx
-│   │   ├── BookingModal.jsx
-│   │   ├── ProtectedRoute.jsx
-│   │   └── Toast.jsx
-│   ├── pages/
-│   │   ├── Home.jsx
-│   │   ├── Cars.jsx
-│   │   ├── MyBookings.jsx
-│   │   ├── Wishlist.jsx
-│   │   ├── UserProfile.jsx
-│   │   ├── Login.jsx
-│   │   ├── Admin.jsx
-│   │   ├── AdminCars.jsx
-│   │   └── AdminBookings.jsx
-│   └── main.jsx
-└── package.json
-```
----
+└── Frontend/
+    ├── public/
+    │
+    ├── src/
+    │   ├── api/
+    │   │   ├── apiManager.js
+    │   │   ├── bookingService.js
+    │   │   ├── carService.js
+    │   │   ├── contactService.js
+    │   │   ├── dashboardService.js
+    │   │   ├── otpService.js
+    │   │   ├── paymentService.js
+    │   │   ├── userService.js
+    │   │   └── wishlistService.js
+    │   │
+    │   ├── assets/
+    │   │
+    │   ├── authentication/
+    │   │   └── login.jsx
+    │   │
+    │   ├── components/
+    │   │   ├── AdminNavbar.jsx
+    │   │   ├── BookingModal.jsx
+    │   │   ├── Footer.jsx
+    │   │   ├── Navbar.jsx
+    │   │   ├── OtpModal.jsx
+    │   │   ├── ProtectedRoute.jsx
+    │   │   └── Toast.jsx
+    │   │
+    │   ├── context/
+    │   │   └── AuthContext.jsx
+    │   │
+    │   ├── hooks/
+    │   │   └── useApi.js
+    │   │
+    │   ├── pages/
+    │   │   ├── Admin.jsx
+    │   │   ├── AdminBookings.jsx
+    │   │   ├── AdminCars.jsx
+    │   │   ├── Cars.jsx
+    │   │   ├── Home.jsx
+    │   │   ├── MyBookings.jsx
+    │   │   ├── UserProfile.jsx
+    │   │   └── Wishlist.jsx
+    │   │
+    │   ├── utils/
+    │   │
+    │   ├── App.jsx
+    │   ├── index.css
+    │   └── main.jsx
+    │
+    ├── .env.local
+    ├── .gitignore
+    ├── eslint.config.js
+    ├── index.html
+    ├── package.json
+    ├── package-lock.json
+    ├── README.md
+    └── vite.config.js
+```---
 
 ## 🚀 Getting Started
 
