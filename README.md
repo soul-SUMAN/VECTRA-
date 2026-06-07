@@ -105,7 +105,7 @@ Built as part of an internship project at **Euphoria GenX** (ISO 9001:2015 certi
 ---
 
 ## 📁 Project Structure
-
+```
 vectra/
 ├── backend/
 │   ├── src/
@@ -179,7 +179,7 @@ vectra/
 │   │   └── AdminBookings.jsx
 │   └── main.jsx
 └── package.json
-
+```
 ---
 
 ## 🚀 Getting Started
