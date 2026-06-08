@@ -46,7 +46,7 @@ if(
               password: Math.random().toString(36), // random password — Google users log in via OAuth only
             });
             try {
-              await sendWelcomeEmail({
+              sendWelcomeEmail({
                 to: user.email,
                 fullname: user.fullname,
               });
