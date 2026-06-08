@@ -2,11 +2,25 @@ import nodemailer from "nodemailer";
 
 // ─── Transporter ───────────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // true only for 465
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,   // Gmail App Password
+    pass: process.env.EMAIL_PASS, // Gmail App Password
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+// Verify SMTP connection on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP Error:", error);
+  } else {
+    console.log("✅ SMTP Server Ready");
+  }
 });
 
 // ─── Base HTML wrapper — matches Vectra dark theme ────────────────────────────
@@ -50,12 +64,20 @@ const baseTemplate = (content) => `
 
 // ─── Send helper ───────────────────────────────────────────────────────────────
 const sendMail = async ({ to, subject, html }) => {
-  await transporter.sendMail({
-    from: `"VECTRA 🚗" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"VECTRA 🚗" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+
+    console.log("✅ Email sent:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("❌ Email send failed:", error);
+    throw error;
+  }
 };
 
 // ───1. Welcome Email (redesigned with car imagery) ──────────────────────────────
