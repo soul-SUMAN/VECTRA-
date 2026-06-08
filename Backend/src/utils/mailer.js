@@ -1,4 +1,8 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
+
+// ─── Force IPv4 — Render free tier blocks outbound IPv6 ──────────────────────
+dns.setDefaultResultOrder("ipv4first");
 
 // ─── Transporter ───────────────────────────────────────────────────────────────
 // Port 587 + secure:false = STARTTLS (works on Render free tier)
@@ -21,9 +25,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // Verify SMTP connection on startup
-transporter.verify((error, success) => {
+transporter.verify((error) => {
   if (error) {
-    console.error("❌ SMTP Error:", error);
+    console.error("❌ SMTP Error:", error.message);
   } else {
     console.log("✅ SMTP Server Ready");
   }
