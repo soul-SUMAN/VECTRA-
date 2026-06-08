@@ -1,17 +1,23 @@
 import nodemailer from "nodemailer";
 
 // ─── Transporter ───────────────────────────────────────────────────────────────
+// Port 587 + secure:false = STARTTLS (works on Render free tier)
+// Port 465 + secure:true  = SSL (blocked by many cloud providers)
+// We use 587 because Render blocks outbound port 465
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: false, // true only for 465
+  host:   "smtp.gmail.com",
+  port:   587,          // ← changed from 465
+  secure: false,        // ← STARTTLS on 587, NOT SSL
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Gmail App Password
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
     rejectUnauthorized: false,
   },
+  connectionTimeout: 10000,  // 10s timeout instead of hanging forever
+  greetingTimeout:   10000,
+  socketTimeout:     15000,
 });
 
 // Verify SMTP connection on startup
@@ -71,12 +77,11 @@ const sendMail = async ({ to, subject, html }) => {
       subject,
       html,
     });
-
     console.log("✅ Email sent:", info.messageId);
     return info;
   } catch (error) {
-    console.error("❌ Email send failed:", error);
-    throw error;
+    console.error("❌ Email send failed (non-fatal):", error.message);
+    return null;
   }
 };
 

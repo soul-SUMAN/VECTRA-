@@ -45,12 +45,18 @@ routes.route("/change-password").post(verifyJWT, changePassword);
 // Google OAuth routes
 routes.get(
   "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { 
+    scope: ["profile", "email"],
+    prompt: "select_account",
+    })
 );
 
 routes.get(
   "/auth/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login` }),
+  passport.authenticate("google", { 
+    session: false, 
+    failureRedirect: `${process.env.FRONTEND_URL}/login` 
+    }),
   googleAuthCallback
 );
 

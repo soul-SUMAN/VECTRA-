@@ -164,7 +164,7 @@ const razorpay = new Razorpay({
       startDate:      start,
       endDate:        end,
       pickupLocation,
-    });
+    }).catch((e) => console.error("Payment received email failed:", e.message));
 
     return res.status(201).json(
       new ApiResponse(201, {

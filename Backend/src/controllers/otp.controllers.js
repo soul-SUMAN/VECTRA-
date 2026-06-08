@@ -32,7 +32,11 @@ export const sendOtp = asyncHandler(async (req, res) => {
   await Otp.create({ email, otp, purpose });
 
   // Send email
-  await sendOtpEmail({ to: email, otp, purpose });
+  try {
+    await sendOtpEmail({ to: email, otp, purpose });
+  } catch (err) {
+    throw new ApiError(500, "Failed to send OTP email. Please try again.");
+  }
 
   return res.status(200).json(new ApiResponse(200, {}, "OTP sent successfully"));
 });

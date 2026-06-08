@@ -164,7 +164,7 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
         totalPrice:     booking.totalPrice,
         pickupLocation: booking.pickupLocation,
         paymentId:      "—",
-    });
+    }).catch((e) => console.error("Booking confirmation email failed:", e.message));
     }
 
   return res

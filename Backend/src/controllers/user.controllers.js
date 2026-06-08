@@ -98,7 +98,9 @@ const registerUser=asyncHandler(async(req,res)=>{
     }
     
     // Send welcome email (non-blocking)
-    await sendWelcomeEmail({ to: user.email, fullname: user.fullname });
+    sendWelcomeEmail({ to: user.email, fullname: user.fullname }).catch((e) =>
+    console.error("Welcome email failed:", e.message)
+    );
 
     // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
 
