@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dns from "dns";
+import { Resend } from "resend";
 
 // // ─── Force IPv4 — Render free tier blocks outbound IPv6 ──────────────────────
 // dns.setDefaultResultOrder("ipv4first");
