@@ -1,37 +1,41 @@
 import nodemailer from "nodemailer";
 import dns from "dns";
 
-// ─── Force IPv4 — Render free tier blocks outbound IPv6 ──────────────────────
-dns.setDefaultResultOrder("ipv4first");
+// // ─── Force IPv4 — Render free tier blocks outbound IPv6 ──────────────────────
+// dns.setDefaultResultOrder("ipv4first");
 
-// ─── Transporter ───────────────────────────────────────────────────────────────
-// Port 587 + secure:false = STARTTLS (works on Render free tier)
-// Port 465 + secure:true  = SSL (blocked by many cloud providers)
-// We use 587 because Render blocks outbound port 465
-const transporter = nodemailer.createTransport({
-  host:   "smtp.gmail.com",
-  port:   587,          // ← changed from 465
-  secure: false,        // ← STARTTLS on 587, NOT SSL
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  connectionTimeout: 10000,  // 10s timeout instead of hanging forever
-  greetingTimeout:   10000,
-  socketTimeout:     15000,
-});
+// // ─── Transporter ───────────────────────────────────────────────────────────────
+// // Port 587 + secure:false = STARTTLS (works on Render free tier)
+// // Port 465 + secure:true  = SSL (blocked by many cloud providers)
+// // We use 587 because Render blocks outbound port 465
+// const transporter = nodemailer.createTransport({
+//   host:   "smtp.gmail.com",
+//   port:   587,          // ← changed from 465
+//   secure: false,        // ← STARTTLS on 587, NOT SSL
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+//   tls: {
+//     rejectUnauthorized: false,
+//   },
+//   connectionTimeout: 10000,  // 10s timeout instead of hanging forever
+//   greetingTimeout:   10000,
+//   socketTimeout:     15000,
+// });
 
-// Verify SMTP connection on startup
-transporter.verify((error) => {
-  if (error) {
-    console.error("❌ SMTP Error:", error.message);
-  } else {
-    console.log("✅ SMTP Server Ready");
-  }
-});
+// // Verify SMTP connection on startup
+// transporter.verify((error) => {
+//   if (error) {
+//     console.error("❌ SMTP Error:", error.message);
+//   } else {
+//     console.log("✅ SMTP Server Ready");
+//   }
+// });
+
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 // ─── Base HTML wrapper — matches Vectra dark theme ────────────────────────────
 const baseTemplate = (content) => `
@@ -73,18 +77,40 @@ const baseTemplate = (content) => `
 </html>`;
 
 // ─── Send helper ───────────────────────────────────────────────────────────────
+// const sendMail = async ({ to, subject, html }) => {
+//   try {
+//     const info = await transporter.sendMail({
+//       from: `"VECTRA 🚗" <${process.env.EMAIL_USER}>`,
+//       to,
+//       subject,
+//       html,
+//     });
+//     console.log("✅ Email sent:", info.messageId);
+//     return info;
+//   } catch (error) {
+//     console.error("❌ Email send failed (non-fatal):", error.message);
+//     return null;
+//   }
+// };
+
 const sendMail = async ({ to, subject, html }) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"VECTRA 🚗" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from:    "VECTRA 🚗 <onboarding@resend.dev>",  // use this until you verify a domain
       to,
       subject,
       html,
     });
-    console.log("✅ Email sent:", info.messageId);
-    return info;
-  } catch (error) {
-    console.error("❌ Email send failed (non-fatal):", error.message);
+
+    if (error) {
+      console.error("❌ Email send failed (non-fatal):", error.message);
+      return null;
+    }
+
+    console.log("✅ Email sent:", data.id);
+    return data;
+  } catch (err) {
+    console.error("❌ Email send failed (non-fatal):", err.message);
     return null;
   }
 };
