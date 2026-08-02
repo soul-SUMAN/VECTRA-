@@ -1,6 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose from "mongoose";
 import { Bookings } from "../models/Booking.models.js";
 import { Cars } from "../models/Car.models.js";
 import { User } from "../models/User.models.js";
@@ -14,6 +15,7 @@ const createBooking = asyncHandler(async (req, res) => {
         pickupLocation,
         dropLocation,
         requiredDriver,
+        quantity: requestedQuantity = 1,
     } = req.body;
 
     // Validate required fields
@@ -32,8 +34,12 @@ const createBooking = asyncHandler(async (req, res) => {
         throw new ApiError(400, "End date must be after start date");
     }
 
-    const carData = await Cars.findById(car);
+    const qtyReq = Number(requestedQuantity) || 1;
+    if (Number.isNaN(qtyReq) || qtyReq < 1) {
+        throw new ApiError(400, "Requested quantity must be a positive integer");
+    }
 
+    const carData = await Cars.findById(car);
     if (!carData) {
         throw new ApiError(404, "Car not found");
     }
@@ -47,24 +53,24 @@ const createBooking = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Car not found");
         }
 
-        const conflictCount = await Bookings.countDocuments({
-            car,
-            status: { $in: ["Pending", "Confirm"] },
-            $or: [
-                {
-                    startDate: { $lte: end },
-                    endDate: { $gte: start },
-                },
-            ],
-        }).session(session);
+        // Sum already-booked quantities for overlapping bookings
+        const agg = await Bookings.aggregate([
+            { $match: {
+                car: mongoose.Types.ObjectId(car),
+                status: { $in: ["Pending", "Confirm"] },
+                $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
+            }},
+            { $group: { _id: null, total: { $sum: { $ifNull: ["$quantity", 1] } } } }
+        ]).session(session);
 
-        const quantity = carDataTx.quantity ?? 1;
-        if (conflictCount >= quantity) {
-            throw new ApiError(400, "This car is unavailable for the selected dates");
+        const overlappingQty = (agg[0] && agg[0].total) ? agg[0].total : 0;
+        const capacity = carDataTx.quantity ?? 1;
+        if (overlappingQty + qtyReq > capacity) {
+            throw new ApiError(400, "Insufficient cars available for the selected dates");
         }
 
         const totalDay = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-        const totalPrice = totalDay * carDataTx.pricePerDay;
+        const totalPrice = totalDay * carDataTx.pricePerDay * qtyReq;
 
         const createdBookings = await Bookings.create(
             [
@@ -79,6 +85,7 @@ const createBooking = asyncHandler(async (req, res) => {
                     dropLocation: dropLocation || pickupLocation,
                     totalDay,
                     totalPrice,
+                    quantity: qtyReq,
                 },
             ],
             { session }
@@ -162,16 +169,7 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
         new: true
     }
   );
-  // When admin cancels a booking — restore the car's quantity slot
-    if (status === "Cancelled") {
-    await Cars.findByIdAndUpdate(
-        booking.car._id,
-        {
-        $inc: { quantity: 1 },
-        isAvailable: true,
-        }
-    );
-    }
+    // No direct mutation of `Cars.quantity` here — availability is computed from bookings totals
 
   if (!booking) {
     throw new ApiError(404, "Booking not found")

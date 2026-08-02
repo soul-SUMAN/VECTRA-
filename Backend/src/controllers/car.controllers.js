@@ -5,6 +5,7 @@ import { Cars } from "../models/Car.models.js";
 import { User } from "../models/User.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Bookings } from "../models/Booking.models.js";
+import mongoose from "mongoose";
 
 const parseNumericField = (value, fieldName, options = {}) => {
     if (value === undefined || value === null || value === "") {
@@ -209,29 +210,32 @@ const getAllCars=asyncHandler(async(req,res)=>{
             }
         },
         {
-            $addFields:{
-                overlappingBookings: {
+            $addFields: {
+                overlappingBookingsQty: {
                     $cond: {
                         if: {
-                            $and:[
-                                { $ifNull:[start, false] },
-                                { $ifNull:[end, false] },
-                            ]
+                            $and: [ { $ifNull: [start, false] }, { $ifNull: [end, false] } ]
                         },
                         then: {
-                            $filter: {
-                                input: "$bookings",
-                                as: "b",
-                                cond: {
-                                    $and:[
-                                        { $in: ["$$b.status", ["Pending", "Confirm"]] }, // ← only active bookings count
-                                        { $lte: ["$$b.startDate", end] },
-                                        { $gte: ["$$b.endDate", start] }
-                                    ]
-                                }
+                            $reduce: {
+                                input: {
+                                    $filter: {
+                                        input: "$bookings",
+                                        as: "b",
+                                        cond: {
+                                            $and: [
+                                                { $in: ["$$b.status", ["Pending", "Confirm"]] },
+                                                { $lte: ["$$b.startDate", end] },
+                                                { $gte: ["$$b.endDate", start] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                initialValue: 0,
+                                in: { $add: ["$$value", { $ifNull: ["$$this.quantity", 1] }] }
                             }
                         },
-                        else: []
+                        else: 0
                     }
                 }
             }
@@ -243,13 +247,10 @@ const getAllCars=asyncHandler(async(req,res)=>{
         },
     
         {
-             $addFields: {
+            $addFields: {
                 availableQuantity: {
                     $max: [
-                        { $subtract: [
-                            { $ifNull: ["$quantity", 1] },
-                            { $size: "$overlappingBookings" }
-                        ]},
+                        { $subtract: [ { $ifNull: ["$quantity", 1] }, { $ifNull: ["$overlappingBookingsQty", 0] } ] },
                         0
                     ]
                 }
@@ -289,6 +290,14 @@ const getAllCars=asyncHandler(async(req,res)=>{
     }
 
     const cars= await Cars.aggregatePaginate(aggregate,options);
+
+    if (process.env.NODE_ENV !== "production") {
+        try {
+            console.log("getAllCars - sample doc:", JSON.stringify(cars.docs?.[0] ?? cars.docs ?? cars));
+        } catch (e) {
+            console.log("getAllCars - sample doc (stringify failed)");
+        }
+    }
 
     return res
     .status(200)
@@ -455,13 +464,19 @@ const getMyCars = asyncHandler(async (req, res) => {
             }
         },
         {
-            // Only count active bookings (not cancelled/completed)
+            // Sum active bookings' quantities (not cancelled/completed)
             $addFields: {
-                activeBookings: {
-                    $filter: {
-                        input: "$bookings",
-                        as:    "b",
-                        cond:  { $in: ["$$b.status", ["Pending", "Confirm"]] }
+                activeBookingsQty: {
+                    $reduce: {
+                        input: {
+                            $filter: {
+                                input: "$bookings",
+                                as: "b",
+                                cond: { $in: ["$$b.status", ["Pending", "Confirm"]] }
+                            }
+                        },
+                        initialValue: 0,
+                        in: { $add: ["$$value", { $ifNull: ["$$this.quantity", 1] }] }
                     }
                 }
             }
@@ -474,10 +489,7 @@ const getMyCars = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 availableQuantity: {
-                    $max: [
-                        { $subtract: ["$quantity", { $size: "$activeBookings" }] },
-                        0
-                    ]
+                    $max: [ { $subtract: ["$quantity", { $ifNull: ["$activeBookingsQty", 0] }] }, 0 ]
                 }
             }
         },
@@ -528,16 +540,18 @@ const checkCarAvailabality= asyncHandler(async(req,res)=>{
     }
 
     const quantity = carData.quantity ?? 1;
-    const overlappingCount = await Bookings.countDocuments({
-        car: carId,
-        status: { $in:[ "Pending", "Confirm" ] },
-        $or:[
-            {
-                startDate: {$lte: end},
-                endDate: {$gte: start}
-            }
-        ]
-    });
+
+    // Sum overlapping booked quantities for selected date range
+    const agg = await Bookings.aggregate([
+        { $match: {
+            car: mongoose.Types.ObjectId(carId),
+            status: { $in: ["Pending", "Confirm"] },
+            $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
+        }},
+        { $group: { _id: null, total: { $sum: { $ifNull: ["$quantity", 1] } } } }
+    ]);
+
+    const overlappingCount = (agg[0] && agg[0].total) ? agg[0].total : 0;
 
     const availableQuantity = Math.max(quantity - overlappingCount, 0);
     const isAvailable = carData.isAvailable !== false && quantity > 0 && availableQuantity > 0;

@@ -53,6 +53,7 @@ export default function BookingModal({ car, onClose }) {
     pickupLocation: "",
     dropLocation:   "",
     paymentMethod:  "Online",
+    quantity: 1,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -87,8 +88,9 @@ export default function BookingModal({ car, onClose }) {
 
   // ── Derived totals ────────────────────────────────────────────────────────
   const days        = daysBetween(form.startDate, form.endDate);
-  const carTotal    = days * car.pricePerDay;
-  const driverTotal = form.requiredDriver ? days * DRIVER_CHARGE_PER_DAY : 0;
+  const qtySelected = Number(form.quantity) || 1;
+  const carTotal    = days * car.pricePerDay * qtySelected;
+  const driverTotal = form.requiredDriver ? days * DRIVER_CHARGE_PER_DAY * qtySelected : 0;
   const grandTotal  = carTotal + driverTotal;
 
   const handleChange = (e) => {
@@ -106,6 +108,16 @@ export default function BookingModal({ car, onClose }) {
     }
     if (days <= 0) {
       setToast({ message: "Drop-off date must be after pickup date", type: "error" });
+      return;
+    }
+    const availableQuantity = Number(car.availableQuantity ?? car.quantity ?? 1);
+    const qtyReq = Number(form.quantity) || 1;
+    if (qtyReq < 1) {
+      setToast({ message: "Please select at least 1 car", type: "error" });
+      return;
+    }
+    if (qtyReq > availableQuantity) {
+      setToast({ message: `Only ${availableQuantity} car(s) available for these dates`, type: "error" });
       return;
     }
     if (!form.pickupLocation.trim()) {
@@ -140,6 +152,7 @@ export default function BookingModal({ car, onClose }) {
           totalDay:       days,
           totalPrice:     grandTotal,
           paymentMethod:  "Cash",
+          quantity:       qtySelected,
         });
         setBooked(true);
         setSubmitting(false);
@@ -207,6 +220,7 @@ export default function BookingModal({ car, onClose }) {
               dropLocation:   form.dropLocation || form.pickupLocation,
               totalDay:       days,
               totalPrice:     grandTotal,
+              quantity:       qtySelected,
               paymentMethod:  form.paymentMethod,
             });
 
@@ -370,6 +384,20 @@ export default function BookingModal({ car, onClose }) {
               onChange={handleChange}
               placeholder="Enter city or address"
               required
+              className={inputClass}
+            />
+          </div>
+
+          {/* Quantity */}
+          <div>
+            <label className={labelClass}>Quantity</label>
+            <input
+              type="number"
+              name="quantity"
+              min={1}
+              max={Number(car.availableQuantity ?? car.quantity ?? 1)}
+              value={form.quantity}
+              onChange={handleChange}
               className={inputClass}
             />
           </div>

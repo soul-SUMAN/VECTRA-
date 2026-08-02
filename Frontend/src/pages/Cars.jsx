@@ -68,7 +68,7 @@ function CarCard({ car, onBook, onWishlist, wishlisted }) {
             : "bg-red-500/20 border border-red-500/40 text-red-400"
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? "bg-green-400" : "bg-red-400"} animate-pulse`} />
-          {isAvailable ? "Available" : "Unavailable"}
+            {isAvailable ? `Available (${availableQuantity})` : "Unavailable"}
         </span>
 
         {/* Body type — top right */}

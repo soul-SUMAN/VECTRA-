@@ -8,6 +8,7 @@ import { Bookings } from "../models/Booking.models.js";
 import { User } from "../models/User.models.js";
 import { Cars } from "../models/Car.models.js";
 import { sendPaymentReceivedEmail  } from "../utils/mailer.js";
+import mongoose from "mongoose";
 
 const razorpay = new Razorpay({
   key_id:     process.env.RAZORPAY_KEY_ID,
@@ -90,23 +91,35 @@ const razorpay = new Razorpay({
     throw new ApiError(400, "Payment verification failed — invalid signature. Contact support.");
   }
 
-  // ── Step 2: Atomic quantity check — race-condition-safe ──────────────────
+  // ── Step 2: Check availability for requested quantity ────────────────────
   const start = new Date(startDate);
   const end   = new Date(endDate);
+  const qtyReq = Number(req.body.quantity) || 1;
 
-  const updatedCar = await Cars.findOneAndUpdate(
-    {
-      _id:         car,
-      quantity:    { $gt: 0 },
-      isAvailable: { $ne: false },
-    },
-    {
-      $inc: { quantity: -1 },
-    },
-    { new: true }
-  );
+  if (qtyReq < 1 || Number.isNaN(qtyReq)) {
+    throw new ApiError(400, "Invalid booking quantity requested");
+  }
 
-  if (!updatedCar) {
+  const carData = await Cars.findById(car);
+  if (!carData) {
+    throw new ApiError(404, "Car not found");
+  }
+
+  // Sum overlapping booked quantities
+  const agg = await Bookings.aggregate([
+    { $match: {
+        car: mongoose.Types.ObjectId(car),
+        status: { $in: ["Pending", "Confirm"] },
+        $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
+    }},
+    { $group: { _id: null, total: { $sum: { $ifNull: ["$quantity", 1] } } } }
+  ]);
+
+  const overlappingQty = (agg[0] && agg[0].total) ? agg[0].total : 0;
+  const capacity = carData.quantity ?? 1;
+
+  if (overlappingQty + qtyReq > capacity) {
+    // Save payment record (so we have a trace) then ask for refund
     await Payment.create({
       user:              req.user._id,
       amount:            Number(totalPrice),
@@ -119,71 +132,64 @@ const razorpay = new Razorpay({
 
     throw new ApiError(
       409,
-      `Payment received (ID: ${razorpay_payment_id}) but this car is fully booked. Please contact support for a refund.`
+      `Payment received (ID: ${razorpay_payment_id}) but insufficient cars are available for these dates. Please contact support for a refund.`
     );
   }
 
-  if (updatedCar.quantity === 0) {
-    await Cars.findByIdAndUpdate(car, { isAvailable: false });
-  }
 
-  const dateConflict = await Bookings.findOne({
-    car,
-    status: { $in: ["Pending", "Confirm"] },
-    $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }],
+  // ── Step 3: Create booking + payment inside transaction to avoid races ───
+  const session = await mongoose.startSession();
+  let booking;
+  await session.withTransaction(async () => {
+    // Re-check overlapping sums inside the transaction
+    const aggTx = await Bookings.aggregate([
+      { $match: {
+          car: mongoose.Types.ObjectId(car),
+          status: { $in: ["Pending", "Confirm"] },
+          $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
+      }},
+      { $group: { _id: null, total: { $sum: { $ifNull: ["$quantity", 1] } } } }
+    ]).session(session);
+
+    const overlappingQtyTx = (aggTx[0] && aggTx[0].total) ? aggTx[0].total : 0;
+    if (overlappingQtyTx + qtyReq > capacity) {
+      throw new ApiError(409, `Insufficient cars are available for these dates`);
+    }
+
+    booking = await Bookings.create([
+      {
+        user:           req.user._id,
+        car,
+        admin:          carData.owner,
+        startDate:      start,
+        endDate:        end,
+        requiredDriver: requiredDriver || false,
+        pickupLocation,
+        dropLocation:   dropLocation || pickupLocation,
+        totalDay:       Number(totalDay),
+        totalPrice:     Number(totalPrice),
+        status:         "Pending",
+        paymentMethod,
+        quantity:       qtyReq,
+      }
+    ], { session });
+
+    await Payment.create([
+      {
+        user:              req.user._id,
+        booking:           booking[0]._id,
+        amount:            Number(totalPrice),
+        razorpayOrderId:   razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        paymentStatus:     "Success",
+        paymentMethod:     "Online",
+      }
+    ], { session });
   });
+  session.endSession();
 
-  if (dateConflict) {
-    await Cars.findByIdAndUpdate(car, {
-      $inc: { quantity: 1 },
-      isAvailable: true,
-    });
-
-    await Payment.create({
-      user:              req.user._id,
-      amount:            Number(totalPrice),
-      razorpayOrderId:   razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      razorpaySignature: razorpay_signature,
-      paymentStatus:     "Success",
-      paymentMethod:     "Online",
-    });
-
-    throw new ApiError(
-      409,
-      `Payment received (ID: ${razorpay_payment_id}) but dates ${startDate} to ${endDate} are already booked. Please contact support for a refund.`
-    );
-  }
-
-  // ── Step 3: Create booking ────────────────────────────────────────────────
-  const carData = updatedCar;
-
-  const booking = await Bookings.create({
-    user:           req.user._id,
-    car,
-    admin:          carData.owner,
-    startDate:      start,
-    endDate:        end,
-    requiredDriver: requiredDriver || false,
-    pickupLocation,
-    dropLocation:   dropLocation || pickupLocation,
-    totalDay:       Number(totalDay),
-    totalPrice:     Number(totalPrice),
-    status:         "Pending",
-    paymentMethod,
-  });
-
-  // ── Step 4: Save payment record ───────────────────────────────────────────
-  await Payment.create({
-    user:              req.user._id,
-    booking:           booking._id,
-    amount:            Number(totalPrice),
-    razorpayOrderId:   razorpay_order_id,
-    razorpayPaymentId: razorpay_payment_id,
-    razorpaySignature: razorpay_signature,
-    paymentStatus:     "Success",
-    paymentMethod:     "Online",
-  });
+  booking = Array.isArray(booking) ? booking[0] : booking;
 
   // ── Step 5: Send email ────────────────────────────────────────────────────
   const user = await User.findById(req.user._id);

@@ -25,6 +25,12 @@ const bookingSchema=new mongoose.Schema(
         },
         totalDay: Number,
         totalPrice: Number,
+        // number of cars requested in this booking (defaults to 1)
+        quantity: {
+            type: Number,
+            default: 1,
+            min: 1
+        },
         status:{
             type:String,
             enum:['Pending','Confirm','Cancelled','Completed'],
