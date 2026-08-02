@@ -356,12 +356,14 @@ const updateCarData = asyncHandler(async (req, res) => {
     const updatedCar = await Cars.findOneAndUpdate(
         { _id: carId, owner: req.user._id },
         { $set: updatedInfo },
-        { new: true, runValidators: true }
+        { returnDocument: "after", runValidators: true }
     );
 
     if (!updatedCar) {
         throw new ApiError(404, "Car not found after update");
     }
+
+    console.log("updateCarData - updatedCar quantity:", updatedCar.quantity);
 
     return res.status(200).json(
         new ApiResponse(200, updatedCar, "Car updated successfully")
