@@ -3,11 +3,23 @@ import axios from "axios";
 // ─── Axios Instance ────────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1",
-  headers: {
-    "Content-Type": "application/json",
-  },
   withCredentials: true, // sends httpOnly cookies automatically
 });
+
+// Ensure JSON requests are sent with the proper header, but let FormData requests set their own multipart boundary.
+api.interceptors.request.use((config) => {
+  if (
+    config.data &&
+    !(config.data instanceof FormData) &&
+    (!config.headers || !config.headers["Content-Type"])
+  ) {
+    config.headers = {
+      ...config.headers,
+      "Content-Type": "application/json",
+    };
+  }
+  return config;
+}, (error) => Promise.reject(error));
 
 // ─── Request Interceptor ───────────────────────────────────────────────────────
 api.interceptors.request.use(

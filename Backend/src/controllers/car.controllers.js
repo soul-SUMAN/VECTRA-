@@ -6,6 +6,23 @@ import { User } from "../models/User.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Bookings } from "../models/Booking.models.js";
 
+const parseNumericField = (value, fieldName, options = {}) => {
+    if (value === undefined || value === null || value === "") {
+        return undefined;
+    }
+
+    const parsed = typeof value === "number" ? value : Number(value);
+    if (Number.isNaN(parsed)) {
+        throw new ApiError(400, `${fieldName} must be a valid number`);
+    }
+
+    if (options.min !== undefined && parsed < options.min) {
+        throw new ApiError(400, `${fieldName} must be a non-negative number`);
+    }
+
+    return parsed;
+};
+
 const addCar= asyncHandler(async(req,res)=>{
     const isAdmin= req.user?.role === "admin"
     if (!isAdmin) {
@@ -13,10 +30,12 @@ const addCar= asyncHandler(async(req,res)=>{
     }
 
     const {name, bodyType, model, brand, year, fuelType, engine, transmission, seats, pricePerDay, location} =req.body;
+    const quantity = req.body.quantity ?? req.body.qty ?? req.body.stock;
 
-    // if([name, bodyType, model, brand, year, fuelType, engine, transmission, seats, pricePerDay, location].some((fields)=>fields?.trim()==="")){
-    //     throw new ApiError(400, "All fields are requeired")
-    // }
+    if (process.env.NODE_ENV !== "production") {
+        console.log("addCar req.body:", JSON.stringify(req.body));
+        console.log("addCar quantity raw:", quantity, "type:", typeof quantity);
+    }
 
     if(
         !name ||
@@ -29,9 +48,15 @@ const addCar= asyncHandler(async(req,res)=>{
         !transmission ||
         !seats ||
         !pricePerDay ||
-        !location
+        !location ||
+        quantity === undefined || quantity === null || quantity === ""
     ){
         throw new ApiError(400, "All fields are required")
+    }
+
+    const parsedQuantity = parseNumericField(quantity, "Quantity", { min: 0 });
+    if (parsedQuantity === undefined) {
+        throw new ApiError(400, "Quantity must be a valid number of cars")
     }
 
     const carImageLocalPath=req.file?.path;
@@ -45,21 +70,29 @@ const addCar= asyncHandler(async(req,res)=>{
         throw new ApiError(400, "Image upload Failed")
     }
 
-    const car= await Cars.create({
-        name,
-        bodyType,
-        model,
-        brand,
-        year,
-        fuelType,
-        engine,
-        transmission,
-        seats,
-        pricePerDay,
-        location,
-        image:uploadImage.url,
-        owner:req.user._id
-    });
+    // console.log("BODY", req.body);
+    // console.log("Quantity:", req.body.quantity);
+    // console.log(typeof req.body.quantity);
+
+    const car = await Cars.create({
+    name,
+    bodyType,
+    model,
+    brand,
+    year,
+    fuelType,
+    engine,
+    transmission,
+    seats,
+    pricePerDay,
+    location,
+    quantity:    parsedQuantity,
+    isAvailable: parsedQuantity > 0,   // ← auto-set: 0 cars = unavailable
+    image:       uploadImage.url,
+    owner:       req.user._id
+});
+
+    // console.log(car);
 
     return res
     .status(200)
@@ -177,35 +210,63 @@ const getAllCars=asyncHandler(async(req,res)=>{
         },
         {
             $addFields:{
-                isAvailable:{
-                    $cond:{
-                        if:{
+                overlappingBookings: {
+                    $cond: {
+                        if: {
                             $and:[
                                 { $ifNull:[start, false] },
                                 { $ifNull:[end, false] },
                             ]
                         },
-                        then:{
-                            $not:{
-                                $anyElementTrue:{
-                                    $map:{
-                                        input:"$bookings",
-                                        as: "b",
-                                        in:{
-                                            $and:[
-                                                { $lte: ["$$b.startDate", end] },
-                                                { $gte: ["$$b.endDate", start] }
-                                            ]
-                                        }
-                                    }
+                        then: {
+                            $filter: {
+                                input: "$bookings",
+                                as: "b",
+                                cond: {
+                                    $and:[
+                                        { $in: ["$$b.status", ["Pending", "Confirm"]] }, // ← only active bookings count
+                                        { $lte: ["$$b.startDate", end] },
+                                        { $gte: ["$$b.endDate", start] }
+                                    ]
                                 }
                             }
                         },
-                        else: true
+                        else: []
                     }
-                } 
+                }
             }
         },
+        {
+            $addFields: {
+                quantity: { $ifNull: ["$quantity", 1] }
+            }
+        },
+    
+        {
+             $addFields: {
+                availableQuantity: {
+                    $max: [
+                        { $subtract: [
+                            { $ifNull: ["$quantity", 1] },
+                            { $size: "$overlappingBookings" }
+                        ]},
+                        0
+                    ]
+                }
+            }
+        },
+            {
+            $addFields: {
+                isAvailable: {
+                    $and: [
+                        { $ne:  ["$isAvailable", false] },
+                        { $gt:  [{ $ifNull: ["$quantity", 1] }, 0] },
+                        { $gt:  ["$availableQuantity", 0] }   // ← now works correctly
+                    ]
+                }
+            }
+        },
+        
         
          ...(typeof isAvailable !== "undefined"
                 ? [{ $match: { isAvailable: isAvailable === "true" } }]
@@ -237,99 +298,75 @@ const getAllCars=asyncHandler(async(req,res)=>{
 });
 
 
-const updateCarData= asyncHandler(async(req,res)=>{
-    const isAdmin= req.user?.role === "admin"
+const updateCarData = asyncHandler(async (req, res) => {
+    const isAdmin = req.user?.role === "admin";
     if (!isAdmin) {
-        throw new ApiError(403, "Only admin can update the car details")
+        throw new ApiError(403, "Only admin can update the car details");
     }
 
-    const {carId}= req.params;
+    const { carId } = req.params;
+
+    const carToUpdate = await Cars.findOne({ _id: carId, owner: req.user._id });
+    if (!carToUpdate) {
+        throw new ApiError(404, "Car not found");
+    }
+
+    const updatedInfo = {};
 
     const {
-        name,
-        bodyType,
-        model,
-        brand,
-        year,
-        fuelType,
-        engine,
-        transmission,
-        seats,
-        pricePerDay,
-        location,
-        isAvailable
+        name, bodyType, model, brand, year, fuelType,
+        engine, transmission, seats, pricePerDay,
+        location, quantity, isAvailable
+    } = req.body;
 
-    }= req.body
+    if (name) updatedInfo.name = String(name).trim();
+    if (bodyType) updatedInfo.bodyType = String(bodyType).trim();
+    if (model) updatedInfo.model = String(model).trim();
+    if (brand) updatedInfo.brand = String(brand).trim();
+    if (fuelType) updatedInfo.fuelType = String(fuelType).trim();
+    if (transmission) updatedInfo.transmission = String(transmission).trim();
+    if (location) updatedInfo.location = String(location).trim();
 
-    const updatedInfo={}
-    if (name) updatedInfo.name= name;
-    if (bodyType) updatedInfo.bodyType= bodyType;
-    if (model) updatedInfo.model= model;
-    if (brand) updatedInfo.brand= brand;
-    if (fuelType) updatedInfo.fuelType= fuelType;
-    if (transmission) updatedInfo.transmission= transmission;
-    if (location) updatedInfo.location= location;
-    
-    // parse and validate seats
-    if (seats !== undefined) {
-        const s = parseInt(seats, 10);
-        if (!Number.isNaN(s)) {
-            updatedInfo.seats = s;
+    if (year != null && year !== "") updatedInfo.year = Number(year);
+    if (pricePerDay != null && pricePerDay !== "") updatedInfo.pricePerDay = Number(pricePerDay);
+    if (seats != null && seats !== "") updatedInfo.seats = Number(seats);
+    if (engine != null && engine !== "") updatedInfo.engine = Number(engine);
+
+    if (quantity !== undefined && quantity !== null && quantity !== "") {
+        const parsedQty = Number(quantity);
+        if (!Number.isNaN(parsedQty) && parsedQty >= 0) {
+            updatedInfo.quantity = parsedQty;
         }
     }
-    if (typeof pricePerDay !== "undefined") updatedInfo.pricePerDay= Number(pricePerDay);
-    if (typeof year !== "undefined") updatedInfo.year= Number(year);
-    if (typeof engine !== "undefined") updatedInfo.engine= Number(engine);
-    if (typeof isAvailable=== "boolean") updatedInfo.isAvailable= isAvailable;
 
-    console.log('updateCarData - updatedInfo before image handling:', updatedInfo);
-
-// image update handling
-    // newImage=req.file?.path;
-    // console.log(newImage)
-
-    // if (!newImage) {
-    //     throw new ApiError(400, "Car image is missing")
-    // }
-
-    // const upldatedImage= await uploadOnCloudinary(newImage);
-
-    // if (!upldatedImage.url) {
-    //         throw new ApiError(400, "Image upload failed")
-    //     }
-
-    //     updatedInfo.image=upldatedImage.url;
-  
-    // debug: log updatedInfo to verify fields being set
-    console.log('updateCarData - updatedInfo:', updatedInfo);
-
-    const updateCar= await Cars.findOneAndUpdate(
-        {
-            _id:carId,
-            owner:req.user._id
-        },
-        {
-            $set: updatedInfo
-        },
-        {
-            new:true
-        }
-    )
-    if (!updateCar) {
-        throw new ApiError(404, "Car not Found")
+    if (isAvailable !== undefined && isAvailable !== null && isAvailable !== "") {
+        if (isAvailable === true || isAvailable === "true") updatedInfo.isAvailable = true;
+        if (isAvailable === false || isAvailable === "false") updatedInfo.isAvailable = false;
     }
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(
-        200,
-        updateCar,
-        "Car updated successfully"
-        )
-        
+    if (Object.keys(updatedInfo).length === 0) {
+        throw new ApiError(400, "No valid fields provided for update");
+    }
+
+    console.log("updateCarData - carId:", carId);
+    console.log("updateCarData - req.body:", JSON.stringify(req.body));
+    console.log("updateCarData - quantity raw:", quantity, "type:", typeof quantity);
+    console.log("updateCarData - updatedInfo:", JSON.stringify(updatedInfo));
+
+    const updatedCar = await Cars.findOneAndUpdate(
+        { _id: carId, owner: req.user._id },
+        { $set: updatedInfo },
+        { new: true, runValidators: true }
     );
-})
+
+    if (!updatedCar) {
+        throw new ApiError(404, "Car not found after update");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedCar, "Car updated successfully")
+    );
+});
 
 const updateCarImage= asyncHandler(async(req,res)=>{
     const isAdmin= req.user?.role === "admin"
@@ -396,23 +433,75 @@ const deleteCar= asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, {}, "Car deleted successfully"));
 })
 
-const getMyCars= asyncHandler(async(req,res)=>{
-    const isAdmin= req.user?.role === "admin"
+const getMyCars = asyncHandler(async (req, res) => {
+    const isAdmin = req.user?.role === "admin";
     if (!isAdmin) {
-        throw new ApiError(403, "Admin only can access their cars")
+        throw new ApiError(403, "Only admin can view their cars");
     }
 
-    const myCars= await Cars.find(
-        {owner:req.user._id}
-    );
+    // Use aggregate so availableQuantity is computed — same logic as getAllCars
+    const cars = await Cars.aggregate([
+        {
+            $match: { owner: req.user._id }
+        },
+        {
+            $lookup: {
+                from:         "bookings",
+                localField:   "_id",
+                foreignField: "car",
+                as:           "bookings"
+            }
+        },
+        {
+            // Only count active bookings (not cancelled/completed)
+            $addFields: {
+                activeBookings: {
+                    $filter: {
+                        input: "$bookings",
+                        as:    "b",
+                        cond:  { $in: ["$$b.status", ["Pending", "Confirm"]] }
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                quantity: { $ifNull: ["$quantity", 1] }
+            }
+        },
+        {
+            $addFields: {
+                availableQuantity: {
+                    $max: [
+                        { $subtract: ["$quantity", { $size: "$activeBookings" }] },
+                        0
+                    ]
+                }
+            }
+        },
+        {
+            $addFields: {
+                isAvailable: {
+                    $and: [
+                        { $ne: ["$isAvailable", false] },
+                        { $gt: ["$quantity", 0] },
+                        { $gt: ["$availableQuantity", 0] }
+                    ]
+                }
+            }
+        },
+        {
+            $project: { bookings: 0, activeBookings: 0 }
+        },
+        {
+            $sort: { createdAt: -1 }
+        }
+    ]);
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, myCars, "Admin cars fetched")
+    return res.status(200).json(
+        new ApiResponse(200, cars, "Cars fetched successfully")
     );
-
-})
+});
 
 const checkCarAvailabality= asyncHandler(async(req,res)=>{
     const { carId }= req.params;
@@ -431,7 +520,13 @@ const checkCarAvailabality= asyncHandler(async(req,res)=>{
     const start= new Date(startDate);
     const end= new Date(endDate);
 
-    const overlapingBooking= await Bookings.findOne({
+    const carData = await Cars.findById(carId);
+    if (!carData) {
+        throw new ApiError(404, "Car not found");
+    }
+
+    const quantity = carData.quantity ?? 1;
+    const overlappingCount = await Bookings.countDocuments({
         car: carId,
         status: { $in:[ "Pending", "Confirm" ] },
         $or:[
@@ -442,12 +537,13 @@ const checkCarAvailabality= asyncHandler(async(req,res)=>{
         ]
     });
 
-    const isAvailable= !overlapingBooking
+    const availableQuantity = Math.max(quantity - overlappingCount, 0);
+    const isAvailable = carData.isAvailable !== false && quantity > 0 && availableQuantity > 0;
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, {isAvailable}, isAvailable ? "Car is available" : "Car is not available")
+        new ApiResponse(200, {isAvailable, availableQuantity}, isAvailable ? "Car is available" : "Car is not available")
     )
 });
 
@@ -464,10 +560,13 @@ const getSingleCar= asyncHandler(async(req,res)=>{
         throw new ApiError(404, "Car not found")
     }
 
+    const carData = car.toObject();
+    carData.quantity = carData.quantity ?? 1;
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200, car, "Car fatched successfully")
+        new ApiResponse(200, carData, "Car fatched successfully")
     )
 });
 

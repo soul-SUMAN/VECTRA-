@@ -17,9 +17,8 @@ export const getMyCars = () =>
   api.get("/cars/admin/my-cars");
 
 export const addCar = (formData) =>
-  api.post("/cars", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  api.post("/cars", formData);
+
 
 export const updateCarData = (carId, data) =>
   api.patch(`/cars/${carId}`, data);

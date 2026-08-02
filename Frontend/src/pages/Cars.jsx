@@ -42,7 +42,8 @@ function Pill({ icon, label }) {
 
 // ─── Car Card ─────────────────────────────────────────────────────────────────
 function CarCard({ car, onBook, onWishlist, wishlisted }) {
-  const isAvailable = car.isAvailable !== false;
+  const availableQuantity = Number(car.availableQuantity ?? car.quantity ?? 0);
+  const isAvailable = car.isAvailable !== false && availableQuantity > 0;
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-3xl border border-slate-700/60 bg-slate-800

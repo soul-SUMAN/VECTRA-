@@ -38,39 +38,56 @@ const createBooking = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Car not found");
     }
 
-    const conflict = await Bookings.findOne({
-        car,
-        status: 
-        { 
-            $in: ["Pending", "Confirm"] 
-        },
-        $or: [
-            {
-                startDate: { $lte: end },
-                endDate: { $gte: start },
-            },
-        ],
+    const session = await mongoose.startSession();
+    let booking;
+
+    await session.withTransaction(async () => {
+        const carDataTx = await Cars.findById(car).session(session);
+        if (!carDataTx) {
+            throw new ApiError(404, "Car not found");
+        }
+
+        const conflictCount = await Bookings.countDocuments({
+            car,
+            status: { $in: ["Pending", "Confirm"] },
+            $or: [
+                {
+                    startDate: { $lte: end },
+                    endDate: { $gte: start },
+                },
+            ],
+        }).session(session);
+
+        const quantity = carDataTx.quantity ?? 1;
+        if (conflictCount >= quantity) {
+            throw new ApiError(400, "This car is unavailable for the selected dates");
+        }
+
+        const totalDay = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        const totalPrice = totalDay * carDataTx.pricePerDay;
+
+        const createdBookings = await Bookings.create(
+            [
+                {
+                    user: req.user._id,
+                    car,
+                    admin: carDataTx.owner,
+                    startDate: start,
+                    endDate: end,
+                    requiredDriver: requiredDriver || false,
+                    pickupLocation,
+                    dropLocation: dropLocation || pickupLocation,
+                    totalDay,
+                    totalPrice,
+                },
+            ],
+            { session }
+        );
+
+        booking = createdBookings[0];
     });
 
-    if (conflict) {
-        throw new ApiError(400, `This car is already booked from ${conflict.startDate.toDateString()} to ${conflict.endDate.toDateString()}. Please choose different dates.`);
-    }
-
-    const totalDay = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    const totalPrice = totalDay * carData.pricePerDay;
-
-    const booking = await Bookings.create({
-        user: req.user._id,
-        car,
-        admin: carData.owner,
-        startDate: start,
-        endDate: end,
-        requiredDriver: requiredDriver || false,
-        pickupLocation,
-        dropLocation: dropLocation || pickupLocation, // Use pickupLocation as default if not provided
-        totalDay,
-        totalPrice,
-    });
+    session.endSession();
 
     return res.status(201).json(new ApiResponse(201, booking, "Car successfully booked"));
 });
@@ -145,6 +162,16 @@ const updateBookingStatus= asyncHandler(async(req,res)=>{
         new: true
     }
   );
+  // When admin cancels a booking — restore the car's quantity slot
+    if (status === "Cancelled") {
+    await Cars.findByIdAndUpdate(
+        booking.car._id,
+        {
+        $inc: { quantity: 1 },
+        isAvailable: true,
+        }
+    );
+    }
 
   if (!booking) {
     throw new ApiError(404, "Booking not found")

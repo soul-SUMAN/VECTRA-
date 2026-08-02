@@ -36,6 +36,12 @@ const carSchema=new mongoose.Schema(
             required:true
         },
         location:String,
+        quantity: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 1
+        },
         isAvailable:{
             type:Boolean,
             default:true
