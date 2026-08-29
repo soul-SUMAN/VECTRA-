@@ -102,8 +102,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     console.error("Welcome email failed:", e.message)
     );
 
-    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username , "\nfullname: " , fullname);
-
+   
     //8. Return response
     return res.status(201).json(
         new ApiResponse(200 , createdUser , "User registered successfully")
@@ -167,7 +166,6 @@ const loginUser= asyncHandler(async(req,res)=>{
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     };
 
-    // console.log("email: ", email , "\npassword:" , password , "\nusername:" , username);
     return res
             .status(200)
             .cookie("accessToken", accessToken, cookieOptions)
@@ -294,8 +292,6 @@ const getCurrentUser= asyncHandler(async(req,res)=>{
 const updateUserDetails= asyncHandler(async(req,res)=>{
     const {fullname, phone, licenceNumber, address}= req.body
 
-    // // Debug logs
-    // console.log("[updateUserDetails] req.body:", req.body);
 
     const userID= req.user?._id
     const updatedData= {}
@@ -314,7 +310,7 @@ const updateUserDetails= asyncHandler(async(req,res)=>{
         };
     }
 
-    // console.log("[updateUserDetails] updatedData:", updatedData);
+    
 
     const updateUserData= await User.findByIdAndUpdate(
         userID,

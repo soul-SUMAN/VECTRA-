@@ -71,9 +71,6 @@ const addCar= asyncHandler(async(req,res)=>{
         throw new ApiError(400, "Image upload Failed")
     }
 
-    // console.log("BODY", req.body);
-    // console.log("Quantity:", req.body.quantity);
-    // console.log(typeof req.body.quantity);
 
     const car = await Cars.create({
     name,
@@ -93,7 +90,7 @@ const addCar= asyncHandler(async(req,res)=>{
     owner:       req.user._id
 });
 
-    // console.log(car);
+
 
     return res
     .status(200)
