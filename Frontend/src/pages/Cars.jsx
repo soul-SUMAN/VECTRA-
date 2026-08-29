@@ -165,17 +165,36 @@ export default function Cars() {
   const [toast,       setToast]       = useState(null);
   const [selectedCar, setSelectedCar] = useState(null);
   const [wishlisted,  setWishlisted]  = useState({});   // { carId: true }
+  const [page,        setPage]        = useState(1);
+  const [pagination,  setPagination]  = useState({
+    page: 1,
+    totalPages: 1,
+    totalDocs: 0,
+    hasPrevPage: false,
+    hasNextPage: false,
+  });
 
   const [filters, setFilters] = useState({
     keyword: "", bodyType: "", fuelType: "", transmission: "", sortBy: "",
   });
 
-  const fetchCars = async (params = {}) => {
+  const fetchCars = async (params = {}, requestedPage = page) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllCars(params);
-      setCars(res.data.data?.docs || []);
+      const res = await getAllCars({ ...params, page: requestedPage, limit: 6 });
+      const data = res.data?.data || {};
+      const docs = data.docs || [];
+
+      setCars(docs);
+      setPage(data.page || requestedPage);
+      setPagination({
+        page: data.page || requestedPage,
+        totalPages: data.totalPages || 1,
+        totalDocs: data.totalDocs || docs.length,
+        hasPrevPage: Boolean(data.hasPrevPage),
+        hasNextPage: Boolean(data.hasNextPage),
+      });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load cars");
     } finally {
@@ -183,7 +202,7 @@ export default function Cars() {
     }
   };
 
-  useEffect(() => { fetchCars(); }, []);
+  useEffect(() => { fetchCars(filters, page); }, []);
 
   const handleFilterChange = (e) => {
     setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -191,7 +210,18 @@ export default function Cars() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchCars(filters);
+    setPage(1);
+    fetchCars(filters, 1);
+  };
+
+  const handlePageChange = (nextPage) => {
+    const totalPages = pagination.totalPages || 1;
+    const safePage = Math.min(Math.max(1, nextPage), totalPages);
+
+    if (safePage === page) return;
+
+    setPage(safePage);
+    fetchCars(filters, safePage);
   };
 
 
@@ -323,7 +353,7 @@ export default function Cars() {
         {!loading && !error && cars.length > 0 && (
           <>
             <p className="text-slate-500 text-sm mb-5">
-              Showing <span className="text-white font-semibold">{cars.length}</span> car{cars.length !== 1 ? "s" : ""}
+              Showing <span className="text-white font-semibold">{cars.length}</span> of <span className="text-white font-semibold">{pagination.totalDocs}</span> car{pagination.totalDocs !== 1 ? "s" : ""}
             </p>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {cars.map((car) => (
@@ -336,6 +366,34 @@ export default function Cars() {
                 />
               ))}
             </div>
+
+            {pagination.totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={!pagination.hasPrevPage}
+                  className="flex items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-yellow-500 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Previous page"
+                >
+                  ← Prev
+                </button>
+
+                <span className="min-w-[120px] text-center text-sm text-slate-300">
+                  Page {pagination.page} / {pagination.totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={!pagination.hasNextPage}
+                  className="flex items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-yellow-500 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Next page"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
