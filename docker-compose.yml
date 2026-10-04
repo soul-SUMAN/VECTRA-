@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./Backend
+    container_name: vectra-backend
+    env_file:
+      - ./Backend/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - fullstack-net
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      NODE_ENV: development
+    working_dir: /app
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./Frontend
+    container_name: vectra-frontend
+    env_file:
+      - ./Frontend/.env.local
+    ports:
+      - "5173:5173"
+    networks:
+      - fullstack-net
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+      NODE_ENV: development
+    depends_on:
+      - backend
+    working_dir: /app
+    command: npm run dev -- --host 0.0.0.0
+
+networks:
+  fullstack-net:
+    driver: bridge
