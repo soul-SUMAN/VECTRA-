@@ -541,7 +541,7 @@ const checkCarAvailabality= asyncHandler(async(req,res)=>{
     // Sum overlapping booked quantities for selected date range
     const agg = await Bookings.aggregate([
         { $match: {
-            car: mongoose.Types.ObjectId(carId),
+            car: new mongoose.Types.ObjectId(carId),
             status: { $in: ["Pending", "Confirm"] },
             $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
         }},

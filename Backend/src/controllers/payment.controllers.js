@@ -108,7 +108,7 @@ const razorpay = new Razorpay({
   // Sum overlapping booked quantities
   const agg = await Bookings.aggregate([
     { $match: {
-        car: mongoose.Types.ObjectId(car),
+        car: new mongoose.Types.ObjectId(car),
         status: { $in: ["Pending", "Confirm"] },
         $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
     }},
@@ -144,7 +144,7 @@ const razorpay = new Razorpay({
     // Re-check overlapping sums inside the transaction
     const aggTx = await Bookings.aggregate([
       { $match: {
-          car: mongoose.Types.ObjectId(car),
+          car: new mongoose.Types.ObjectId(car),
           status: { $in: ["Pending", "Confirm"] },
           $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
       }},

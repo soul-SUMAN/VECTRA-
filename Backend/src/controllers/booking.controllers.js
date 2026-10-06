@@ -56,7 +56,7 @@ const createBooking = asyncHandler(async (req, res) => {
         // Sum already-booked quantities for overlapping bookings
         const agg = await Bookings.aggregate([
             { $match: {
-                car: mongoose.Types.ObjectId(car),
+                car: new mongoose.Types.ObjectId(car),
                 status: { $in: ["Pending", "Confirm"] },
                 $or: [ { startDate: { $lte: end }, endDate: { $gte: start } } ]
             }},
