@@ -33,6 +33,7 @@
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
+- [Deployment](#deployment)
 - [API Overview](#api-overview)
 - [Booking Flow](#booking-flow)
 - [Screenshots](#screenshots)
@@ -225,65 +226,69 @@ VECTRA/
 
 ### Prerequisites
 
-- Node.js v18+
-- MongoDB Atlas account
-- Cloudinary account
-- Razorpay account
-- Gmail account with App Password
+- Node.js 20 or newer and npm
+- MongoDB database
+- Cloudinary account (for car image uploads)
+- Razorpay account (for online payments)
+- Resend account (for transactional emails)
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/soul-SUMAN/vectra.git
-cd vectra
+git clone https://github.com/soul-SUMAN/VECTRA-.git
+cd VECTRA-
 ```
 
 ### 2. Setup Backend
 
 ```bash
-cd backend
+cd Backend
 npm install
 ```
 
-Create a `.env` file inside `backend/` — see [Environment Variables](#environment-variables) below.
+Create `Backend/.env` using the [backend environment variables](#backend-environment-variables) below, then start the API:
 
 ```bash
 npm run dev
 ```
 
-Backend runs on `http://localhost:4000`
+The backend listens on `http://localhost:8000` by default. Set `PORT` in `Backend/.env` to override it.
 
 ### 3. Setup Frontend
 
 ```bash
-cd frontend
+cd ../Frontend
 npm install
 ```
 
-Create a `.env` file inside `frontend/`:
+Create `Frontend/.env.local`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:4000/api/v1
+VITE_API_URL=http://localhost:8000/api/v1
+VITE_BACKEND_URL=http://localhost:8000/api/v1
 ```
+
+Start the Vite development server:
 
 ```bash
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`
+Frontend runs on `http://localhost:5173`. The `VITE_*` values are included in the frontend bundle; do not put secrets in them.
 
 ---
 
 ## 🔐 Environment Variables
 
-### `backend/.env`
+### Backend environment variables
 
 ```env
-PORT=4000
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/vectra
+PORT=8000
+NODE_ENV=development
+MONGODB_URL=mongodb+srv://<user>:<password>@cluster.mongodb.net
 
-ACCESS_TOKEN_SECRET=your_access_secret
-REFRESH_TOKEN_SECRET=your_refresh_secret
+ACCESS_TOKEN_SECKRET=your_access_secret
+REFRESH_TOKEN_SECKRET=your_refresh_secret
 ACCESS_TOKEN_EXPIRY=1d
 REFRESH_TOKEN_EXPIRY=10d
 
@@ -291,25 +296,43 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx
+RAZORPAY_KEY_ID=your_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_secret
 
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:4000/api/v1/user/auth/google/callback
-
-EMAIL_USER=your@gmail.com
-EMAIL_PASS=your_gmail_app_password
+RESEND_API_KEY=your_resend_api_key
 
 FRONTEND_URL=http://localhost:5173
-NODE_ENV=development
 ```
 
-### `frontend/.env`
+`MONGODB_URL` is the MongoDB connection URL without a database name; the backend appends `vectraDB`. Google OAuth also requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_CALLBACK_URL` to be configured in the backend environment. Keep production credentials in the hosting provider's environment settings, never in the repository.
+
+### Frontend environment variables
 
 ```env
-VITE_API_BASE_URL=http://localhost:4000/api/v1
+VITE_API_URL=http://localhost:8000/api/v1
+VITE_BACKEND_URL=http://localhost:8000/api/v1
 ```
+
+---
+
+## 🚀 Deployment
+
+The GitHub Actions workflow at [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs when code is pushed to `main`. It uses Node.js 24 to:
+
+1. Install backend and frontend dependencies from their lockfiles with `npm ci`.
+2. Build the frontend for production.
+3. After the checks pass, send deployment webhook requests to Render (backend) and Vercel (frontend).
+
+To enable deployment, add these repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Purpose |
+|---|---|
+| `RENDER_DEPLOY_WEBHOOK` | Render deploy hook URL for the backend service |
+| `VERCEL_DEPLOY_WEBHOOK` | Vercel deploy hook URL for the frontend project |
+
+Configure the Render service to deploy the `Backend` app and the Vercel project to use `Frontend` as its root directory. Add backend runtime credentials (MongoDB, token secrets, Cloudinary, Razorpay, Resend, and OAuth settings if used) to the Render service's environment variables. Set `FRONTEND_URL` there to the production frontend origin so CORS, authentication redirects, and email links use the deployed site.
+
+The workflow supplies `VITE_API_URL` and `VITE_BACKEND_URL` at build time. Keep the backend URL configured in the workflow synchronized with the production Render URL; these values are compiled into the frontend. A successful webhook step confirms that the hosting provider accepted the deployment request; check the Render and Vercel deployment logs to confirm the deployments completed.
 
 ---
 
