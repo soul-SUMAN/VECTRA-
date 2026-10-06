@@ -3,7 +3,7 @@
 > India's Fastest Growing Car Rental Platform — Book, Pay, Drive.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-vectracars.vercel.app-yellow?style=for-the-badge&logo=vercel)](https://vectracars.vercel.app/)
-[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render)](https://vectra-backend-2er2.onrender.com)
+[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render)](https://vectra-backend-docker.onrender.com)
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb)](https://cloud.mongodb.com)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-02042B?style=for-the-badge&logo=razorpay)](https://razorpay.com)
 
@@ -14,7 +14,7 @@
 | Service | URL |
 |---|---|
 | 🌐 Frontend | [vectracars.vercel.app](https://vectracars.vercel.app/) |
-| ⚙️ Backend API | [vectra-backend-2er2.onrender.com](https://vectra-backend-2er2.onrender.com) |
+| ⚙️ Backend API | [vectra-backend-docker.onrender.com](https://vectra-backend-docker.onrender.com) |
 
 ---
 
@@ -332,7 +332,7 @@ To enable deployment, add these repository secrets under **Settings → Secrets 
 
 Configure the Render service to deploy the `Backend` app and the Vercel project to use `Frontend` as its root directory. Add backend runtime credentials (MongoDB, token secrets, Cloudinary, Razorpay, Resend, and OAuth settings if used) to the Render service's environment variables. Set `FRONTEND_URL` there to the production frontend origin so CORS, authentication redirects, and email links use the deployed site.
 
-The workflow supplies `VITE_API_URL` and `VITE_BACKEND_URL` at build time. Keep the backend URL configured in the workflow synchronized with the production Render URL; these values are compiled into the frontend. A successful webhook step confirms that the hosting provider accepted the deployment request; check the Render and Vercel deployment logs to confirm the deployments completed.
+The production backend base URL is `https://vectra-backend-docker.onrender.com`; the API base URL is `https://vectra-backend-docker.onrender.com/api/v1`. The workflow supplies `VITE_API_URL` and `VITE_BACKEND_URL` at build time. Both currently use the `/api/v1` base because the frontend uses them for API requests and the Google OAuth route. These values are compiled into the frontend, so keep them synchronized with the Render service URL. A successful webhook step confirms that the hosting provider accepted the deployment request; check the Render and Vercel deployment logs to confirm the deployments completed.
 
 ---
 

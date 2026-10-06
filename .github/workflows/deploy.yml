@@ -37,7 +37,7 @@ jobs:
         working-directory: Frontend
         env:
           VITE_API_URL: https://vectra-backend-docker.onrender.com/api/v1
-          VITE_BACKEND_URL: https://vectra-backend-docker.onrender.com
+          VITE_BACKEND_URL: https://vectra-backend-docker.onrender.com/api/v1
         run: npm run build
 
   production-deployment:
